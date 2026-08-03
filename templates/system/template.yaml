@@ -1,0 +1,100 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: system-golden-path
+  title: System Golden Path
+  description: Create a System and activate only its Domain's designated build environment.
+  annotations: {backstage-gitea.io/github-compatible: 'true'}
+  tags: [contract-first, gitops, system]
+spec:
+  owner: group:default/platform-engineering
+  type: system
+  parameters:
+    - title: System
+      required: [systemName, description, domainRef]
+      properties:
+        systemName:
+          title: System name
+          type: string
+          pattern: '^([a-z][a-z0-9]*)(-[a-z0-9]+)*$'
+        description: {title: Description, type: string}
+        domainRef:
+          title: Domain
+          type: string
+          ui:field: EntityPicker
+          ui:options: {allowArbitraryValues: false, catalogFilter: [{kind: Domain}]}
+  steps:
+    - id: fetchDomain
+      name: Fetch Domain policy
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.domainRef }}
+        defaultKind: Domain
+        defaultNamespace: default
+    - id: renderBase
+      name: Render System repository
+      action: fetch:template
+      input:
+        url: ../../skeletons/system/base
+        targetPath: system-repo
+        values:
+          systemName: ${{ parameters.systemName }}
+          description: ${{ parameters.description }}
+          owner: group:default/${{ steps.fetchDomain.output.entity.metadata.name }}-maintainers
+          domainRef: ${{ parameters.domainRef }}
+          groupId: ${{ steps.fetchDomain.output.entity.spec.groupId }}.${{ parameters.systemName | replace('-', '') }}
+          scmProvider: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-provider'] or 'github' }}
+          scmHost: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-host'] }}
+          domainOrg: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-org'] }}
+          domainRepo: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-repo'] }}
+          repositoryName: ${{ parameters.systemName }}-system
+    - id: renderDomainActivation
+      name: Render build-environment activation
+      action: fetch:template
+      input:
+        url: ../../skeletons/system/domain-repo
+        targetPath: domain-pr/systems/${{ parameters.systemName }}/environments
+        values:
+          environment: ${{ steps.fetchDomain.output.entity.spec.environments.build }}
+          systemName: ${{ parameters.systemName }}
+          groupId: ${{ steps.fetchDomain.output.entity.spec.groupId }}.${{ parameters.systemName | replace('-', '') }}
+          systemRepoCloneUrl: https://${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-host'] }}/${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-org'] }}/${{ parameters.systemName }}-system.git
+          systemRepoRevision: main
+    - id: publish
+      name: Publish System repository
+      action: publish:github
+      input:
+        sourcePath: system-repo
+        repoUrl: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-host'] }}?owner=${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-org'] }}&repo=${{ parameters.systemName }}-system
+        description: GitOps repository for System ${{ parameters.systemName }}
+        defaultBranch: main
+        repoVisibility: public
+        protectDefaultBranch: false
+        collaborators:
+          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-maintainers', access: push}
+          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-viewers', access: pull}
+    - id: register
+      name: Register System immediately
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: catalog-info.yaml
+    - id: domainPr
+      name: Open build-environment activation pull request
+      action: publish:github:pull-request
+      input:
+        repoUrl: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-host'] }}?owner=${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-org'] }}&repo=${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-repo'] }}
+        branchName: add-system-${{ parameters.systemName }}-to-${{ steps.fetchDomain.output.entity.spec.environments.build }}
+        title: Create System ${{ parameters.systemName }} in ${{ steps.fetchDomain.output.entity.spec.environments.build }}
+        description: Merging this pull request creates System ${{ parameters.systemName }}'s platform presence in the Domain's build environment.
+        sourcePath: domain-pr
+        createWhenEmpty: false
+  output:
+    links:
+      - title: System repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Domain build-environment pull request
+        url: ${{ steps.domainPr.output.remoteUrl }}
+      - title: System catalog entity
+        icon: catalog
+        entityRef: system:default/${{ parameters.systemName }}

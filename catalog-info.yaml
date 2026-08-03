@@ -1,0 +1,31 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: contract-first-idp-software-templates
+  description: Contract-first golden path templates
+spec:
+  type: url
+  targets:
+    - ./templates/domain/template.yaml
+    - ./templates/system/template.yaml
+    - ./templates/system/activation.yaml
+    - ./templates/api/template.yaml
+    - ./templates/component/template.yaml
+    - ./templates/resource/template.yaml
+    - ./templates/component/promotion.yaml
+    # - ./samples/bookinfo/domain.yaml
+    # - ./samples/bookinfo/system.yaml
+    # - ./samples/bookinfo/api.yaml
+    # - ./samples/bookinfo/api-details.yaml
+    # - ./samples/bookinfo/api-productpage.yaml
+    # - ./samples/bookinfo/api-ratings.yaml
+    # - ./samples/bookinfo/component.yaml
+    # - ./samples/bookinfo/resource.yaml
+    # - ./samples/cross-system/payments-domain.yaml
+    # - ./samples/cross-system/payments-system.yaml
+    # - ./samples/cross-system/api-authorization.yaml
+    # - ./samples/cross-system/vendor-domain.yaml
+    # - ./samples/cross-system/vendor-system.yaml
+    # - ./samples/cross-system/api-details.yaml
+    # - ./samples/cross-system/storefront-system.yaml
+    # - ./samples/cross-system/api-legacy.yaml

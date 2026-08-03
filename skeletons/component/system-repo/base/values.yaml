@@ -1,0 +1,6 @@
+implementationProfile: ${{ values.implementationProfile }}
+build:
+  enabled: ${{ values.buildEnabled }}
+  repository: ${{ values.componentRepoCloneUrl }}
+  revision: ${{ values.sourceRevision }}
+  dockerfilePath: ${{ values.dockerfilePath }}

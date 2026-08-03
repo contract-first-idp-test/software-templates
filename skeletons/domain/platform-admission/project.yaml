@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: tenant-${{ values.domainName }}-admission
+  namespace: ${{ values.argocdNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  description: Parent Domain attachment for ${{ values.domainName }}.
+  sourceRepos:
+    - ${{ values.developerChartsRepositoryUrl }}
+    - https://${{ values.tenantScmHost }}/${{ values.organization }}/${{ values.repositoryName }}.git
+    - https://${{ values.platformRepositoryHost }}/${{ values.platformRepositoryOrganization }}/${{ values.platformRepositoryName }}.git
+  destinations:
+    - server: ${{ values.destinationServer }}
+      namespace: ${{ values.argocdNamespace }}
+  namespaceResourceWhitelist:
+    - {group: argoproj.io, kind: AppProject}
+    - {group: argoproj.io, kind: ApplicationSet}

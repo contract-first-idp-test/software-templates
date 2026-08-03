@@ -1,0 +1,16 @@
+provided:
+{% if values.provided_api %}
+  - ref: ${{ values.provided_api.ref }}
+    version: ${{ values.provided_api.version }}
+{% else %}
+  []
+{% endif %}
+consumed:
+{% if values.consumed_apis | length > 0 %}
+{% for api in values.consumed_apis %}
+  - ref: ${{ api.ref }}
+    version: ${{ api.version }}
+{% endfor %}
+{% else %}
+  []
+{% endif %}
