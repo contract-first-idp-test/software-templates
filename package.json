@@ -3,9 +3,10 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "test": "jest --runInBand && npm run test:chart-compat",
+    "test": "jest --runInBand",
     "test:contracts": "jest test/contracts --runInBand",
     "test:skeletons": "jest test/skeletons --runInBand",
+    "test:compatibility": "jest --config jest.compatibility.config.js --runInBand && npm run test:chart-compat",
     "test:chart-compat": "node test/contracts/chart-compat.js",
     "test:remote-revision": "node test/contracts/remote-chart-revision.js",
     "test:build": "node test/build/verify-component-profiles.js",

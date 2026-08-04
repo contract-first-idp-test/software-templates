@@ -6,7 +6,8 @@ contract.
 ## Prerequisites
 
 - Node.js and npm
-- A sibling `developer-charts` checkout for compatibility testing
+- Sibling `developer-charts` and `platform-components` checkouts only for manual compatibility
+  testing
 - Maven repository access only when compiling generated Java baselines
 - A Backstage instance only for opt-in smoke tests
 
@@ -19,36 +20,49 @@ npm ci
 npm test
 ```
 
-The default command runs the Jest suites followed by chart compatibility:
+The default command runs only repository-local Jest suites:
 
 | Suite | Command | Covers |
 | --- | --- | --- |
 | Repository contracts | `npm run test:contracts` | Registered templates, metadata, actions, and file contracts |
 | Skeleton rendering | `npm run test:skeletons` | Representative generated repositories and profile-specific output |
-| Chart compatibility | `npm run test:chart-compat` | Root target, generated values, schemas, and canonical chart paths |
+| Coordinated compatibility | `npm run test:compatibility` | Root target, generated values, consumers, schemas, and canonical chart paths |
 
-These tests do not require a live Backstage instance, cluster, or Schema Registry. Keep the
-coordinated `developer-charts` checkout beside this repository for the compatibility stage.
+`npm test` does not require sibling repositories, a live Backstage instance, cluster, or Schema
+Registry. GitHub Actions currently runs this repository-local command only.
 
 ## Template-to-chart compatibility
 
-Render representative generated values against a sibling chart repository:
+Use this standard workspace layout:
+
+```text
+workspace/
+├── platform-components/
+├── software-templates/
+└── developer-charts/
+```
+
+Render representative generated values and verify their active consumers against both siblings:
 
 ```bash
-DEVELOPER_CHARTS_DIR=../developer-charts npm run test:chart-compat
+DEVELOPER_CHARTS_DIR=../developer-charts \
+PLATFORM_COMPONENTS_DIR=../platform-components \
+npm run test:compatibility
 ```
+
+Compatibility checks are manual and are not run by repository-local CI for now.
 
 Use this whenever changing a generated Domain entrypoint, System discovery file, Component values,
 Resource values, or any chart value passed by a template.
 
-Verify the configured remote `v1.0.0` release boundary separately:
+Verify the configured released revision separately:
 
 ```bash
 npm run test:remote-revision
 ```
 
-The coordinated repositories intentionally support only `v1.0.0`; the tag must be moved to the
-new coordinated commits before the release-boundary check and workflows can pass.
+When publishing the next coordinated release, create a new immutable tag, update the platform
+contract to it, and let the remote check consume that declaration. Do not move an existing tag.
 
 Helm implementation behavior belongs in `developer-charts`; this repository verifies the producer
 side of the shared contract.
@@ -105,7 +119,7 @@ Run them only in an explicitly prepared environment with the required service an
 - Preserve the distinction between tenant SCM annotations and platform chart coordinates.
 - Add or update a deterministic contract test for every generated Git signal.
 - Run `npm test`.
-- Run `npm run test:chart-compat` when the consumer chart contract changes.
+- Run `npm run test:compatibility` with both sibling checkouts when a coordinated contract changes.
 - Run `npm run test:build` when a generated Java profile or POM changes.
 - Update the root README or architecture guide when a golden path, trust model, or lifecycle
   changes.

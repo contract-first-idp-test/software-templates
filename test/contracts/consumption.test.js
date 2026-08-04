@@ -10,6 +10,18 @@ const platformRoot = path.resolve(
 const read = (base, relative) => fs.readFileSync(path.join(base, relative), 'utf8');
 
 describe('generated Git output is consumed at the exact coordinated paths', () => {
+  test('the sibling platform root catalog remains the single target contract', () => {
+    expect(fs.existsSync(path.join(
+      platformRoot, 'targets/workshop/domain-values.yaml'))).toBe(false);
+    expect(YAML.parse(read(platformRoot, 'catalog-info.yaml'))).toMatchObject({
+      kind: 'Resource',
+      spec: {
+        type: 'contract-first-idp-target',
+        platform: {configuration: {valuesPath: 'catalog-info.yaml'}},
+      },
+    });
+  });
+
   test.each([
     {
       entity: 'System',

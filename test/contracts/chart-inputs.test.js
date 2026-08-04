@@ -7,22 +7,6 @@ const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 
 describe('template-to-chart inputs', () => {
   it('uses the target catalog entity as the single platform contract', () => {
-    const platformRoot = path.resolve(root, '../platform-components');
-    expect(fs.existsSync(path.join(
-      platformRoot, 'targets/workshop/domain-values.yaml'))).toBe(false);
-    const target = YAML.parse(fs.readFileSync(path.join(
-      platformRoot, 'catalog-info.yaml'), 'utf8'));
-    expect(target).toMatchObject({
-      kind: 'Resource',
-      spec: {
-        type: 'contract-first-idp-target',
-        platform: {
-          configuration: {
-            valuesPath: 'catalog-info.yaml',
-          },
-        },
-      },
-    });
     for (const name of ['domain', 'api', 'component']) {
       const templateSource = read(`templates/${name}/template.yaml`);
       expect(templateSource).toContain('steps.fetchTarget.output.entity.spec.platform');

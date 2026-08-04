@@ -7,17 +7,29 @@ npm ci
 npm test
 ```
 
-It validates registered template contracts, renders representative skeletons locally, and checks
-generated values against the sibling `developer-charts` repository. Parameter inputs live under
-`test/fixtures/inputs/`; coordinated Bookinfo and cross-System data lives under
+It validates repository-local template contracts and renders representative skeletons. Parameter
+inputs live under `test/fixtures/inputs/`; coordinated Bookinfo and cross-System data lives under
 `test/fixtures/scenarios/`. These files are test data, not production catalog entities.
 
-Helm implementation behavior belongs to `developer-charts`. The compatibility command used by
-`npm test` verifies representative generated chart inputs against the sibling checkout:
+Cross-repository compatibility is intentionally manual for now. Use this sibling layout:
+
+```text
+workspace/
+├── platform-components/
+├── software-templates/
+└── developer-charts/
+```
+
+Then run the consumption contract and chart compatibility checks explicitly:
 
 ```bash
-DEVELOPER_CHARTS_DIR=../developer-charts npm run test:chart-compat
+DEVELOPER_CHARTS_DIR=../developer-charts \
+PLATFORM_COMPONENTS_DIR=../platform-components \
+npm run test:compatibility
 ```
+
+These checks are not part of `npm test` or repository-local GitHub Actions. They fail when the
+sibling repositories are absent or incompatible.
 
 The release-boundary check fetches the configured repository at the one supported coordinated
 revision and verifies that its canonical chart paths exist:
@@ -26,8 +38,8 @@ revision and verifies that its canonical chart paths exist:
 npm run test:remote-revision
 ```
 
-All coordinated repository metadata targets `v1.0.0`; move that tag whenever the coordinated
-release content changes.
+During release preparation, update the platform contract to the intended immutable release tag and
+run this check separately. Do not move an existing release tag.
 
 The generated Maven baselines can be compiled separately when Maven repositories are reachable:
 
@@ -51,10 +63,6 @@ references are unavailable. It also fails if the dedicated smoke Jest configurat
 tests. Register required fixture entities separately in the prepared test
 Backstage installation; the production root catalog never references `test/fixtures/`. Use
 `npm run test:debug` to retain dry-run output under `output/`.
-
-CI reads `SMOKE_BACKSTAGE_URL`, `SMOKE_TEST_DOMAIN_REF`, `SMOKE_TEST_SYSTEM_REF`, and
-`SMOKE_TEST_COMPONENT_REF` from GitHub Actions repository variables. If the installation requires
-authentication, provide it through the `SMOKE_BACKSTAGE_TOKEN` Actions secret.
 
 Real Registry mutation remains explicitly opt-in:
 
