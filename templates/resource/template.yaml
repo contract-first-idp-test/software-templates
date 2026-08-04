@@ -131,7 +131,6 @@ spec:
       action: catalog:register
       input:
         repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
-        catalogInfoPath: catalog-info.yaml
     - id: systemPr
       name: Open System Resource pull request
       action: publish:github:pull-request

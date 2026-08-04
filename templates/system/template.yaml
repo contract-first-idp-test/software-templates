@@ -78,7 +78,6 @@ spec:
       action: catalog:register
       input:
         repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
-        catalogInfoPath: catalog-info.yaml
     - id: domainPr
       name: Open build-environment activation pull request
       action: publish:github:pull-request

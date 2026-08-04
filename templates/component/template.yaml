@@ -313,7 +313,6 @@ spec:
       action: catalog:register
       input:
         repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
-        catalogInfoPath: catalog-info.yaml
     - id: webhook
       name: Create Tekton webhook
       action: github:webhook

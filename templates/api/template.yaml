@@ -141,7 +141,6 @@ spec:
       action: catalog:register
       input:
         repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
-        catalogInfoPath: catalog-info.yaml
     - id: webhook
       name: Create API build webhook
       action: github:webhook

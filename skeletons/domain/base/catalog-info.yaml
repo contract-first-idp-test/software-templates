@@ -19,12 +19,12 @@ spec:
   groupId: ${{ values.groupId }}
   environments:
     order:
-{% for environment in values.environments %}
+{%- for environment in values.environments %}
       - ${{ environment.name }}
-{% endfor %}
+{%- endfor %}
     build: ${{ values.buildEnvironment }}
     definitions:
-{% for environment in values.environments %}
+{%- for environment in values.environments %}
       ${{ environment.name }}:
         namespaceSuffix: ${{ environment.namespaceSuffix | default("") | dump }}
-{% endfor %}
+{%- endfor %}
