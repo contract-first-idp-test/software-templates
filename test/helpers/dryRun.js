@@ -11,6 +11,47 @@ const {repositoryRoot, testRoot} = require('./paths');
 const EXPRESSION_PATTERN = /\$\{\{[\s\S]*?\}\}/g;
 const MAX_GZIPPED_REQUEST_BYTES = 90 * 1024;
 
+function resolveRepositoryPath(requestedPath, repoRoot = repositoryRoot) {
+  const resolvedRepoRoot = path.resolve(repoRoot);
+  return path.isAbsolute(requestedPath)
+    ? path.normalize(requestedPath)
+    : path.resolve(resolvedRepoRoot, requestedPath);
+}
+
+function resolveTemplatePath(templatePath, repoRoot = repositoryRoot) {
+  return resolveRepositoryPath(templatePath, repoRoot);
+}
+
+function resolveFixturePath(fixturePath, repoRoot = repositoryRoot) {
+  return resolveRepositoryPath(fixturePath, repoRoot);
+}
+
+function pathResolutionError({kind, repoRoot, requestedPath, resolvedPath}) {
+  return new Error([
+    `${kind} path could not be resolved`,
+    '',
+    'Repository root:',
+    `  ${repoRoot}`,
+    '',
+    `Requested ${kind.toLowerCase()} path:`,
+    `  ${requestedPath}`,
+    '',
+    `Resolved ${kind.toLowerCase()} path:`,
+    `  ${resolvedPath}`,
+  ].join('\n'));
+}
+
+async function statResolvedPath({kind, repoRoot, requestedPath, resolvedPath}) {
+  try {
+    return await stat(resolvedPath);
+  } catch (error) {
+    if (error.code === 'ENOENT' || error.code === 'ENOTDIR') {
+      throw pathResolutionError({kind, repoRoot, requestedPath, resolvedPath});
+    }
+    throw error;
+  }
+}
+
 async function loadDependencyContents(rootPath, dependencyPaths, contentOverrides = {}) {
   const files = new Set();
 
@@ -324,12 +365,22 @@ async function callDryRunApi({ baseUrl, token, body }) {
   };
 }
 
-function defaultOutputDir({ templatePath, fixturePath }) {
-  const resolved = path.resolve(templatePath);
-  const templateName = path.basename(resolved, path.extname(resolved));
-  const fixtureName = path.basename(fixturePath, path.extname(fixturePath));
+function defaultOutputDir({resolvedRepoRoot, resolvedTemplatePath, resolvedFixturePath}) {
+  const templatePathFromRepoRoot = path.relative(resolvedRepoRoot, resolvedTemplatePath);
+  const parsedTemplatePath = path.parse(templatePathFromRepoRoot);
+  const outputTemplatePath = path.join(parsedTemplatePath.dir, parsedTemplatePath.name);
+  const fixtureName = path.basename(
+    resolvedFixturePath,
+    path.extname(resolvedFixturePath),
+  );
 
-  return path.join(testRoot, 'output', templateName, fixtureName);
+  return path.join(testRoot, 'output', outputTemplatePath, fixtureName);
+}
+
+function resolveOutputDir(outputDir) {
+  return path.isAbsolute(outputDir)
+    ? path.normalize(outputDir)
+    : path.resolve(testRoot, outputDir);
 }
 
 async function runDryRun({
@@ -345,11 +396,31 @@ async function runDryRun({
   registryContentFixtures,
 }) {
   const resolvedRepoRoot = path.resolve(repoRoot);
-  const resolvedTemplatePath = path.resolve(templatePath);
-  const templateStat = await stat(resolvedTemplatePath);
+  const resolvedTemplatePath = resolveTemplatePath(templatePath, resolvedRepoRoot);
+  const resolvedFixturePath = resolveFixturePath(fixturePath, resolvedRepoRoot);
+  const templateStat = await statResolvedPath({
+    kind: 'Template',
+    repoRoot: resolvedRepoRoot,
+    requestedPath: templatePath,
+    resolvedPath: resolvedTemplatePath,
+  });
+  await statResolvedPath({
+    kind: 'Fixture',
+    repoRoot: resolvedRepoRoot,
+    requestedPath: fixturePath,
+    resolvedPath: resolvedFixturePath,
+  });
   const resolvedTemplateDirectory = templateStat.isDirectory()
     ? resolvedTemplatePath
     : path.dirname(resolvedTemplatePath);
+  if (templateStat.isDirectory()) {
+    await statResolvedPath({
+      kind: 'Template',
+      repoRoot: resolvedRepoRoot,
+      requestedPath: templatePath,
+      resolvedPath: path.join(resolvedTemplatePath, 'template.yaml'),
+    });
+  }
 
   const templateDirFromRepoRoot = path
     .relative(resolvedRepoRoot, resolvedTemplateDirectory)
@@ -362,7 +433,7 @@ async function runDryRun({
     );
   }
 
-  const values = await loadFixtureYaml(fixturePath);
+  const values = await loadFixtureYaml(resolvedFixturePath);
   const secrets = {};
 
   if (registryContentFixtures) {
@@ -403,8 +474,15 @@ async function runDryRun({
     },
   });
 
-  const finalOutputDir =
-    writeOutput ? outputDir || defaultOutputDir({ templatePath, fixturePath }) : null;
+  const finalOutputDir = writeOutput
+    ? outputDir
+      ? resolveOutputDir(outputDir)
+      : defaultOutputDir({
+        resolvedRepoRoot,
+        resolvedTemplatePath,
+        resolvedFixturePath,
+      })
+    : null;
 
   if (finalOutputDir) {
     await writeOutputToDisk(finalOutputDir, result.directoryContents);
@@ -433,5 +511,9 @@ module.exports = {
   rewriteCompatibleActions,
   applyRegistryFixtureOverrides,
   applyLocalDomainContract,
+  defaultOutputDir,
+  resolveFixturePath,
+  resolveOutputDir,
+  resolveTemplatePath,
   runDryRun,
 };
