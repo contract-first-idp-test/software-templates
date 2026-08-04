@@ -1,54 +1,41 @@
-# Contract-First IDP software templates
+# Contract-First IDP Software Templates
 
-Backstage golden paths for creating and operating application delivery tenants on OpenShift.
+Give developers clear Backstage golden paths from an idea to reviewable, deployable Git state.
 
-## Compatibility
+These templates turn short forms into catalog entities, source repositories, GitOps configuration,
+and pull requests. Developers get a useful starting point; platform teams keep control of the
+runtime implementation; Git keeps the handoff visible to everyone.
 
-```text
-platform-components: v1.0.0
-software-templates:  v1.0.0
-developer-charts:    v1.0.0
-contract generation: v1
-```
+## Start here
 
-This repository is the developer-facing intent layer of Contract-First IDP. Its templates turn
-short Backstage forms into catalog entities, source repositories, GitOps configuration, and pull
-requests. The templates do not deploy workloads or write to a cluster. Argo CD and the companion
-`developer-charts` repository reconcile the resulting Git state.
+- **Setting up a tenant:** follow [Bootstrap a tenant](docs/getting-started.md), then use the
+  [golden paths](#choose-a-golden-path) in order.
+- **Learning the model:** read [Architecture and Git contracts](docs/architecture.md).
+- **Contributing a template:** start with [Development and testing](docs/development.md).
 
-## Why this repository exists
+If you are installing the platform itself, begin in `platform-components`. Most developers use
+these templates through Developer Hub and do not need to clone this repository.
 
-A golden path should remove setup work without hiding how an application is owned or operated.
-Backstage is useful for collecting intent, but a completed form is not a durable operating model.
-This repository turns that momentary input into repositories and pull requests that teams can
-inspect, review, reproduce, and continue managing without returning to the scaffolder.
+## Choose a golden path
 
-Keeping this work separate from `developer-charts` creates a deliberate division of responsibility:
+For a new tenant, follow the first five paths in order. Use the lifecycle paths whenever the
+application moves forward.
 
-- developers choose names, relationships, contracts, configuration, and release intent;
-- platform engineers choose the approved runtime implementation and infrastructure integration;
-- Git records the handoff between them in a format both groups can review;
-- Backstage needs SCM access, but it does not need cluster credentials;
-- template changes can be tested and released without coupling them to chart implementation
-  changes.
+| Order | Golden path | What it does | What you get |
+| ---: | --- | --- | --- |
+| 1 | **Create Tenant Domain** | Defines the tenant, owners, environments, and platform target | A Domain repository and a platform-admission pull request |
+| 2 | **System Golden Path** | Groups related APIs, Components, and Resources | A System repository active in the build environment |
+| 3 | **OpenAPI Specification Golden Path** | Creates and governs an API contract independently | An API repository and Registry publication configuration |
+| 4 | **Component Golden Path** | Creates a Java API producer or consumer | Source, developer tooling, catalog metadata, and build GitOps state |
+| 5 | **Resource Golden Path** | Requests a supported managed dependency | A Resource repository and environment configuration |
+| Repeat | **Activate System Environment** | Activates a System in its next environment | A Domain repository pull request |
+| Repeat | **Promote Component** | Selects a release for the next environment | A System repository pull request |
 
-The repository is successful when a generated project is understandable and operable after
-Backstage finishes. The template is a starting point and lifecycle interface, not a permanent
-runtime dependency.
+The model has one simple hierarchy: a Domain owns Systems; a System owns APIs, Components, and
+Resources. API and Component lifecycles remain independent, so a team can design a contract before,
+during, or after implementing it.
 
-This repository deliberately does **not**:
-
-- install operators or bootstrap a cluster;
-- render or apply Kubernetes workloads;
-- own the platform's Helm and Tekton implementation;
-- create tenant SCM organizations and teams;
-- replace Git review with direct environment mutation.
-
-> **New to the project?** Start with [Bootstrap a tenant](docs/getting-started.md). Platform
-> maintainers should also read the
-> [architecture, rationale, and Git contracts](docs/architecture.md).
-
-## How the pieces fit together
+## What happens after a form is submitted
 
 ```mermaid
 flowchart TD
@@ -61,27 +48,22 @@ flowchart TD
     argocd --> platform[OpenShift, Tekton, Quay, and operators]
 ```
 
-The flow is intentionally one-way: people express intent through Backstage and Git; the platform
-reconciles that intent. Backstage never needs Kubernetes credentials, and the charts never write
-back to Git.
+The flow is intentionally one-way. Backstage writes to Git, Argo CD reads from Git, and the charts
+reconcile the cluster. Backstage never needs Kubernetes credentials, and the charts never write
+back to tenant repositories.
 
-## Choose a golden path
+## Supported coordinated release
 
-Use the paths in this order for a new tenant. Lifecycle paths can be repeated later.
+```text
+platform-components: v1.0.0
+software-templates:  v1.0.0
+developer-charts:    v1.0.0
+contract generation: v1
+```
 
-| Order | Golden path | Use it to | Primary result |
-| ---: | --- | --- | --- |
-| 1 | **Create Tenant Domain** | Establish a portable tenant and its ordered environments | A public `<domain>-domain` repository, registered Domain, and append-only platform admission pull request |
-| 2 | **System Golden Path** | Group related application capabilities inside the Domain | A maintainer-owned `<system>-system` repository and build-environment activation pull request |
-| 3 | **OpenAPI Specification Golden Path** | Govern an API independently of its implementation | An API repository, catalog entity, and Schema Registry publication configuration |
-| 4 | **Component Golden Path** | Create a Java API producer or consumer | Working source, developer tooling, catalog metadata, and build-environment GitOps state; Quarkus Camel with Java DSL is the recommended default |
-| 5 | **Resource Golden Path** | Request a managed dependency | A Resource repository and environment overlays; PostgreSQL is currently supported |
-| Repeat | **Activate System Environment** | Make an existing System available in its next environment | A Domain repository pull request |
-| Repeat | **Promote Component** | Select a versioned Component release in the next environment | A System repository pull request |
-
-The key modeling rule is that a Domain owns Systems, and a System owns APIs, Components, and
-Resources. API and Component lifecycles are independent: teams can design and publish a contract
-before, during, or after implementing its producer and consumers.
+The templates create intent; they do not install operators, deploy workloads, create SCM
+organizations, or bypass Git review. Runtime behavior belongs to `developer-charts`, while platform
+installation belongs to `platform-components`.
 
 ## Documentation
 
