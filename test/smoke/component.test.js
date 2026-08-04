@@ -1,10 +1,10 @@
-const {getTestConfig} = require('../utils/env');
-const {runDryRun} = require('../utils/dryRun');
+const {getTestConfig} = require('../helpers/env');
+const {runDryRun} = require('../helpers/dryRun');
 const {
   componentDryRunOverrides,
   componentRegistryFixtures,
-} = require('../utils/component');
-const {expectFile} = require('../utils/assertions');
+} = require('../helpers/component');
+const {expectFile} = require('../helpers/assertions');
 
 test('live Backstage dry-run creates a complex cross-System Component', async () => {
   const config = getTestConfig();

@@ -1,8 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const YAML = require('yaml');
+const {repositoryRoot: root} = require('../helpers/paths');
 
-const root = path.resolve(__dirname, '../..');
 const chartsRoot = path.resolve(
   root, process.env.DEVELOPER_CHARTS_DIR || '../developer-charts');
 const platformRoot = path.resolve(

@@ -2,9 +2,8 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const YAML = require('yaml');
-const {renderDirectory} = require('../utils/profileRenderer');
-
-const root = path.resolve(__dirname, '../..');
+const {renderDirectory} = require('../helpers/profileRenderer');
+const {repositoryRoot: root} = require('../helpers/paths');
 
 test('Resource skeleton renders PostgreSQL catalog and desired-state values', async () => {
   const destination = await fs.mkdtemp(path.join(os.tmpdir(), 'resource-skeleton-'));

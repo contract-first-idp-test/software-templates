@@ -4,13 +4,13 @@ const YAML = require('yaml');
 const {
   API_VERSION_PATTERN,
   RELEASE_VERSION_PATTERN,
-} = require('../utils/releaseVersion');
+} = require('../helpers/releaseVersion');
 const {
   applyRegistryFixtureOverrides,
   rewriteCompatibleActions,
-} = require('../utils/dryRun');
+} = require('../helpers/dryRun');
+const {repositoryRoot: root} = require('../helpers/paths');
 
-const root = path.resolve(__dirname, '../..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const supportedActions = new Set([
   'catalog:fetch',
@@ -43,6 +43,19 @@ function localDependencies(templatePath, value) {
 describe('registered template contracts', () => {
   const catalog = YAML.parse(read('catalog-info.yaml'));
   const targets = catalog.spec.targets;
+
+  it('keeps the private Node and Jest project entirely under test', () => {
+    for (const obsolete of ['package.json', 'package-lock.json', 'jest.config.js', 'node_modules']) {
+      expect(fs.existsSync(path.join(root, obsolete))).toBe(false);
+    }
+    const testPackage = JSON.parse(read('test/package.json'));
+    expect(testPackage).toMatchObject({name: 'software-templates-tests', private: true});
+    for (const required of [
+      'test/package-lock.json', 'test/jest.config.js',
+      'test/jest.compatibility.config.js', 'test/jest.smoke.config.js',
+      'test/helpers/paths.js',
+    ]) expect(fs.existsSync(path.join(root, required))).toBe(true);
+  });
 
   it('parses the catalog and every registered template', () => {
     expect(catalog.kind).toBe('Location');

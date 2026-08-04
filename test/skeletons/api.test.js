@@ -3,9 +3,8 @@ const os = require('node:os');
 const path = require('node:path');
 const YAML = require('yaml');
 const {XMLValidator} = require('fast-xml-parser');
-const {renderDirectory} = require('../utils/profileRenderer');
-
-const root = path.resolve(__dirname, '../..');
+const {renderDirectory} = require('../helpers/profileRenderer');
+const {repositoryRoot: root} = require('../helpers/paths');
 
 test('API skeleton renders valid XML and catalog YAML', async () => {
   const destination = await fs.mkdtemp(path.join(os.tmpdir(), 'api-skeleton-'));

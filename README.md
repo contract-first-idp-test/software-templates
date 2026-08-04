@@ -104,9 +104,11 @@ Read [Architecture and Git contracts](docs/architecture.md) for:
 Read [Development and testing](docs/development.md). The default suite is local and deterministic:
 
 ```bash
-npm ci
-npm test
+make test
 ```
+
+All Node and Jest tooling is scoped under `test/`; this repository is not an npm package. The
+direct equivalent is `npm ci --prefix test` followed by `npm test --prefix test`.
 
 ## Why the generated repositories are separate
 
@@ -134,7 +136,10 @@ escaping the tenant's ownership and SCM scope.
 | [`skeletons/`](skeletons/) | Generated repository and pull-request content |
 | [`test/fixtures/`](test/fixtures/) | Input sets and multi-entity scenarios used only by tests |
 | [`test/contracts/`](test/contracts/) | Repository and template-to-chart contract tests |
+| [`test/coordinated/`](test/coordinated/) | Manual current-source contracts across sibling repositories |
+| [`test/release/`](test/release/) | Manual validation of released dependency revisions |
 | [`test/skeletons/`](test/skeletons/) | Deterministic generated-source tests |
+| [`test/helpers/`](test/helpers/) | Shared test fixtures, renderers, assertions, and path helpers |
 | [`test/build/`](test/build/) | Explicit Maven baseline verification |
 | [`test/smoke/`](test/smoke/) | Opt-in live Backstage dry-run tests |
 | [`test/live/`](test/live/) | Opt-in external-service checks |
@@ -190,8 +195,7 @@ the target itself requires no secondary fetch or parse.
 The deterministic suite and all fixtures use the singular `test/` directory:
 
 ```bash
-npm ci
-npm test
+make test
 ```
 
 ## Current limitations

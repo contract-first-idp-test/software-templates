@@ -2,15 +2,15 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const {spawn} = require('node:child_process');
-const {profileValues} = require('../utils/componentProfileFixtures');
-const {renderComponentProfile} = require('../utils/profileRenderer');
+const {profileValues} = require('../helpers/componentProfileFixtures');
+const {renderComponentProfile} = require('../helpers/profileRenderer');
+const {repositoryRoot: root} = require('../helpers/paths');
 
 if (process.env.APICURIO_LIVE !== '1') {
   console.error('Refusing live Registry mutation without APICURIO_LIVE=1');
   process.exit(2);
 }
 
-const root = path.resolve(__dirname, '../..');
 const apiUrl = (
   process.env.APICURIO_API_URL ||
   'https://registry.example.com/apis/registry/v3'

@@ -2,8 +2,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const jsonata = require('jsonata');
 const YAML = require('yaml');
+const {repositoryRoot: root} = require('../helpers/paths');
 
-const root = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(
   path.join(root, 'templates/component/template.yaml'), 'utf8');
 const template = YAML.parse(source);

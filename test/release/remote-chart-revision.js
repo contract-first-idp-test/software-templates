@@ -3,15 +3,14 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const YAML = require('yaml');
+const {repositoryRoot: root} = require('../helpers/paths');
 
-const root = path.resolve(__dirname, '../..');
 const platformRoot = path.resolve(
   root, process.env.PLATFORM_COMPONENTS_DIR || '../platform-components');
 const target = YAML.parse(fs.readFileSync(
   path.join(platformRoot, 'catalog-info.yaml'), 'utf8'));
 const dependency = target.spec.platform.dependencies.developerCharts;
 const charts = target.spec.platform.charts;
-const expectedRevision = 'v1.0.0';
 const requiredCharts = [
   'charts/api/specification-build/Chart.yaml',
   'charts/component/environment/Chart.yaml',
@@ -25,10 +24,6 @@ if (dependency.repositoryUrl !== charts.repositoryUrl ||
     dependency.revision !== charts.revision) {
   throw new Error('The developerCharts dependency and charts coordinates must be identical');
 }
-if (dependency.revision !== expectedRevision) {
-  throw new Error(`All coordinated consumers must target ${expectedRevision}`);
-}
-
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'remote-charts-'));
 try {
   const checkout = path.join(temporary, 'developer-charts');

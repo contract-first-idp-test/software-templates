@@ -6,6 +6,7 @@ const { gzipSync } = require('zlib');
 const YAML = require('yaml');
 
 const { loadFixtureYaml } = require('./fixtures');
+const {repositoryRoot, testRoot} = require('./paths');
 
 const EXPRESSION_PATTERN = /\$\{\{[\s\S]*?\}\}/g;
 const MAX_GZIPPED_REQUEST_BYTES = 90 * 1024;
@@ -328,7 +329,7 @@ function defaultOutputDir({ templatePath, fixturePath }) {
   const templateName = path.basename(resolved, path.extname(resolved));
   const fixtureName = path.basename(fixturePath, path.extname(fixturePath));
 
-  return path.join(process.cwd(), 'output', templateName, fixtureName);
+  return path.join(testRoot, 'output', templateName, fixtureName);
 }
 
 async function runDryRun({
@@ -338,7 +339,7 @@ async function runDryRun({
   fixturePath,
   outputDir,
   writeOutput = false,
-  repoRoot = process.cwd(),
+  repoRoot = repositoryRoot,
   domainContractPath,
   dependencyContentOverrides,
   registryContentFixtures,

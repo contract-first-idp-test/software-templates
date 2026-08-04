@@ -1,7 +1,8 @@
 const path = require('node:path');
 const dotenv = require('dotenv');
+const {testRoot} = require('./paths');
 
-dotenv.config({ path: path.resolve(process.cwd(), 'test/.env') });
+dotenv.config({path: path.join(testRoot, '.env')});
 
 function getEnv(name, { required = false } = {}) {
   const value = process.env[name];

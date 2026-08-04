@@ -16,19 +16,26 @@ contract.
 Install locked dependencies and run the deterministic suite:
 
 ```bash
-npm ci
-npm test
+make test
+```
+
+All Node and Jest tooling is scoped under `test/`; the repository itself is not an npm package.
+The direct equivalent is:
+
+```bash
+npm ci --prefix test
+npm test --prefix test
 ```
 
 The default command runs only repository-local Jest suites:
 
 | Suite | Command | Covers |
 | --- | --- | --- |
-| Repository contracts | `npm run test:contracts` | Registered templates, metadata, actions, and file contracts |
-| Skeleton rendering | `npm run test:skeletons` | Representative generated repositories and profile-specific output |
-| Coordinated compatibility | `npm run test:compatibility` | Root target, generated values, consumers, schemas, and canonical chart paths |
+| Repository contracts | `npm run --prefix test test:contracts` | Registered templates, metadata, actions, and file contracts |
+| Skeleton rendering | `npm run --prefix test test:skeletons` | Representative generated repositories and profile-specific output |
+| Coordinated compatibility | `npm run --prefix test test:compatibility` | Root target, generated values, consumers, schemas, and canonical chart paths |
 
-`npm test` does not require sibling repositories, a live Backstage instance, cluster, or Schema
+`make test` does not require sibling repositories, a live Backstage instance, cluster, or Schema
 Registry. GitHub Actions currently runs this repository-local command only.
 
 ## Template-to-chart compatibility
@@ -47,7 +54,7 @@ Render representative generated values and verify their active consumers against
 ```bash
 DEVELOPER_CHARTS_DIR=../developer-charts \
 PLATFORM_COMPONENTS_DIR=../platform-components \
-npm run test:compatibility
+npm run --prefix test test:compatibility
 ```
 
 Compatibility checks are manual and are not run by repository-local CI for now.
@@ -58,7 +65,7 @@ Resource values, or any chart value passed by a template.
 Verify the configured released revision separately:
 
 ```bash
-npm run test:remote-revision
+npm run --prefix test test:remote-revision
 ```
 
 When publishing the next coordinated release, create a new immutable tag, update the platform
@@ -72,10 +79,10 @@ side of the shared contract.
 Compile all generated Component profiles when Maven repositories are reachable:
 
 ```bash
-npm run test:build
+npm run --prefix test test:build
 ```
 
-This test is intentionally separate from `npm test` because it downloads external build
+This test is intentionally separate from `make test` because it downloads external build
 dependencies.
 
 ## Live Backstage smoke tests
@@ -84,7 +91,7 @@ Create local configuration, then run representative creation and promotion dry-r
 
 ```bash
 cp test/.env.example test/.env
-npm run test:smoke
+npm run --prefix test test:smoke
 ```
 
 The suite exercises Backstage rendering only. It does not execute Git mutations, Tekton,
@@ -96,19 +103,19 @@ activation is not currently covered by the smoke suite.
 Retain dry-run workspaces for troubleshooting:
 
 ```bash
-npm run test:debug
+npm run --prefix test test:debug
 ```
 
-Generated output is written under `output/`. Remove it with `npm run clean`. Never commit
-`test/.env`.
+Generated output is written under `test/output/`. Remove it with `npm run --prefix test clean`.
+Never commit `test/.env`.
 
 ## External-service checks
 
 The following commands make real external calls and are never part of the default suite:
 
 ```bash
-APICURIO_LIVE=1 npm run test:apicurio-live
-npm run test:promotion-live
+APICURIO_LIVE=1 npm run --prefix test test:apicurio-live
+npm run --prefix test test:promotion-live
 ```
 
 Run them only in an explicitly prepared environment with the required service and cluster access.
@@ -118,8 +125,9 @@ Run them only in an explicitly prepared environment with the required service an
 - Keep template and skeleton paths relative to the registered template source.
 - Preserve the distinction between tenant SCM annotations and platform chart coordinates.
 - Add or update a deterministic contract test for every generated Git signal.
-- Run `npm test`.
-- Run `npm run test:compatibility` with both sibling checkouts when a coordinated contract changes.
-- Run `npm run test:build` when a generated Java profile or POM changes.
+- Run `make test`.
+- Run `npm run --prefix test test:compatibility` with both sibling checkouts when a coordinated
+  contract changes.
+- Run `npm run --prefix test test:build` when a generated Java profile or POM changes.
 - Update the root README or architecture guide when a golden path, trust model, or lifecycle
   changes.

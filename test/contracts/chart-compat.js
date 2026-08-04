@@ -6,8 +6,8 @@ const nunjucks = require('nunjucks');
 const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
 const YAML = require('yaml');
+const {repositoryRoot: root} = require('../helpers/paths');
 
-const root = path.resolve(__dirname, '../..');
 const charts = process.env.DEVELOPER_CHARTS_DIR || '../developer-charts';
 const chartsRoot = path.resolve(root, charts);
 if (!fs.existsSync(path.join(chartsRoot, 'charts/domain/system-discovery/Chart.yaml'))) {

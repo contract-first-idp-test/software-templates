@@ -1,6 +1,7 @@
 const { readFile } = require('node:fs/promises');
 const path = require('node:path');
 const YAML = require('yaml');
+const {repositoryRoot} = require('./paths');
 
 function interpolateEnv(template) {
   return template.replace(/\$\{([A-Z0-9_]+)\}/g, (_, name) => {
@@ -15,7 +16,7 @@ function interpolateEnv(template) {
 }
 
 async function loadFixtureYaml(relativePath) {
-  const fixturePath = path.resolve(process.cwd(), relativePath);
+  const fixturePath = path.resolve(repositoryRoot, relativePath);
   const raw = await readFile(fixturePath, 'utf8');
   return YAML.parse(interpolateEnv(raw));
 }

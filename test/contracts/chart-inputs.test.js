@@ -1,8 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const YAML = require('yaml');
+const {repositoryRoot: root} = require('../helpers/paths');
 
-const root = path.resolve(__dirname, '../..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 
 describe('template-to-chart inputs', () => {

@@ -1,6 +1,6 @@
-const {getTestConfig} = require('../utils/env');
-const {MAX_GZIPPED_REQUEST_BYTES, runDryRun} = require('../utils/dryRun');
-const {expectFileToContain} = require('../utils/assertions');
+const {getTestConfig} = require('../helpers/env');
+const {MAX_GZIPPED_REQUEST_BYTES, runDryRun} = require('../helpers/dryRun');
+const {expectFileToContain} = require('../helpers/assertions');
 
 test('live Backstage dry-run proposes one immutable Component promotion', async () => {
   const config = getTestConfig();

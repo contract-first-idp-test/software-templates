@@ -18,6 +18,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - run: npm test
+          cache-dependency-path: test/package-lock.json
+      - name: Print test tool versions
+        run: |
+          node --version
+          npm --version
+      - name: Run deterministic tests
+        run: make test
       - run: git diff --check

@@ -1,9 +1,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const YAML = require('yaml');
-const {validateDomainEnvironmentContract} = require('../utils/domainContract');
+const {validateDomainEnvironmentContract} = require('../helpers/domainContract');
+const {repositoryRoot: root} = require('../helpers/paths');
 
-const root = path.resolve(__dirname, '../..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const fixture = () => YAML.parse(read('test/fixtures/inputs/nonstandard-lifecycle/domain.yaml'));
 

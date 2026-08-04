@@ -3,8 +3,15 @@
 The default suite is deterministic and service-free:
 
 ```bash
-npm ci
-npm test
+make test
+```
+
+All Node and Jest tooling is scoped under `test/`; the repository itself is not an npm package.
+The direct equivalent from the repository root is:
+
+```bash
+npm ci --prefix test
+npm test --prefix test
 ```
 
 It validates repository-local template contracts and renders representative skeletons. Parameter
@@ -20,22 +27,27 @@ workspace/
 └── developer-charts/
 ```
 
-Then run the consumption contract and chart compatibility checks explicitly:
+This is a contributor integration workspace. Workshop installers normally fork only
+`platform-components` and consume released template and chart dependencies; they do not need all
+three checkouts.
+
+The current-source integration tests have one owner under `test/coordinated/`. Run those consumption
+contracts and the chart compatibility checks explicitly:
 
 ```bash
 DEVELOPER_CHARTS_DIR=../developer-charts \
 PLATFORM_COMPONENTS_DIR=../platform-components \
-npm run test:compatibility
+npm run --prefix test test:compatibility
 ```
 
-These checks are not part of `npm test` or repository-local GitHub Actions. They fail when the
+These checks are not part of `make test` or repository-local GitHub Actions. They fail when the
 sibling repositories are absent or incompatible.
 
 The release-boundary check fetches the configured repository at the one supported coordinated
 revision and verifies that its canonical chart paths exist:
 
 ```bash
-npm run test:remote-revision
+npm run --prefix test test:remote-revision
 ```
 
 During release preparation, update the platform contract to the intended immutable release tag and
@@ -44,7 +56,7 @@ run this check separately. Do not move an existing release tag.
 The generated Maven baselines can be compiled separately when Maven repositories are reachable:
 
 ```bash
-npm run test:build
+npm run --prefix test test:build
 ```
 
 ## Live Backstage smoke tests
@@ -55,21 +67,21 @@ Tekton, Apicurio, Argo CD, or image promotion.
 
 ```bash
 cp test/.env.example test/.env
-npm run test:smoke
+npm run --prefix test test:smoke
 ```
 
 The command fails immediately and lists missing configuration if the live Backstage URL and catalog
 references are unavailable. It also fails if the dedicated smoke Jest configuration discovers zero
 tests. Register required fixture entities separately in the prepared test
 Backstage installation; the production root catalog never references `test/fixtures/`. Use
-`npm run test:debug` to retain dry-run output under `output/`.
+`npm run --prefix test test:debug` to retain dry-run output under `test/output/`.
 
 Real Registry mutation remains explicitly opt-in:
 
 ```bash
-APICURIO_LIVE=1 npm run test:apicurio-live
+APICURIO_LIVE=1 npm run --prefix test test:apicurio-live
 ```
 
 Real promotion transport, when the existing live script and cluster prerequisites are available,
-remains explicitly opt-in through `npm run test:promotion-live`. Neither live command is part of
-`npm test`.
+remains explicitly opt-in through `npm run --prefix test test:promotion-live`. Neither live command
+is part of `make test`.

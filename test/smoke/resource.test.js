@@ -1,6 +1,6 @@
-const {getTestConfig} = require('../utils/env');
-const {runDryRun} = require('../utils/dryRun');
-const {expectFile, parseYamlFile} = require('../utils/assertions');
+const {getTestConfig} = require('../helpers/env');
+const {runDryRun} = require('../helpers/dryRun');
+const {expectFile, parseYamlFile} = require('../helpers/assertions');
 
 test('live Backstage dry-run creates a PostgreSQL Resource', async () => {
   const config = getTestConfig();

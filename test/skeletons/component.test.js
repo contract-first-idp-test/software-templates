@@ -7,10 +7,10 @@ const {
   consumedApis,
   profileValues,
   providedApi,
-} = require('../utils/componentProfileFixtures');
-const {renderComponentProfile, renderDirectory} = require('../utils/profileRenderer');
+} = require('../helpers/componentProfileFixtures');
+const {renderComponentProfile, renderDirectory} = require('../helpers/profileRenderer');
+const {repositoryRoot: root} = require('../helpers/paths');
 
-const root = path.resolve(__dirname, '../..');
 const profiles = [
   'spring-boot-openapi',
   'spring-boot-camel-openapi',

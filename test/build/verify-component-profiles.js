@@ -2,10 +2,10 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const {spawn} = require('node:child_process');
-const {profileValues} = require('../utils/componentProfileFixtures');
-const {renderComponentProfile} = require('../utils/profileRenderer');
+const {profileValues} = require('../helpers/componentProfileFixtures');
+const {renderComponentProfile} = require('../helpers/profileRenderer');
+const {repositoryRoot: root} = require('../helpers/paths');
 
-const root = path.resolve(__dirname, '../..');
 const profiles = [
   'spring-boot-openapi',
   'spring-boot-camel-openapi',

@@ -1,8 +1,9 @@
 const {spawnSync} = require('node:child_process');
 const path = require('node:path');
 const dotenv = require('dotenv');
+const {testRoot} = require('../helpers/paths');
 
-dotenv.config({path: path.resolve(process.cwd(), 'test/.env')});
+dotenv.config({path: path.join(testRoot, '.env')});
 
 const required = [
   'BACKSTAGE_URL',
@@ -21,7 +22,7 @@ if (missing.length) {
 }
 
 const jest = require.resolve('jest/bin/jest');
-const config = path.resolve(process.cwd(), 'jest.smoke.config.js');
+const config = path.join(testRoot, 'jest.smoke.config.js');
 const discovered = spawnSync(process.execPath, [
   jest, '--config', config, '--listTests', '--runInBand',
 ], {encoding: 'utf8'});

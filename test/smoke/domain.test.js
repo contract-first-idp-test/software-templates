@@ -1,6 +1,6 @@
-const {getTestConfig} = require('../utils/env');
-const {runDryRun} = require('../utils/dryRun');
-const {parseYamlFile} = require('../utils/assertions');
+const {getTestConfig} = require('../helpers/env');
+const {runDryRun} = require('../helpers/dryRun');
+const {parseYamlFile} = require('../helpers/assertions');
 
 test('live Backstage dry-run creates a Domain repository', async () => {
   const config = getTestConfig();
