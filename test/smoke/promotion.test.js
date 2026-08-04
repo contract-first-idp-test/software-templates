@@ -8,8 +8,8 @@ test('live Backstage dry-run proposes one immutable Component promotion', async 
     baseUrl: config.baseUrl,
     token: config.token,
     templatePath: 'templates/component/promotion.yaml',
-    fixturePath: 'test/fixtures/basic/promotion.yaml',
-    domainContractPath: 'samples/bookinfo/domain.yaml',
+    fixturePath: 'test/fixtures/inputs/basic/promotion.yaml',
+    domainContractPath: 'test/fixtures/scenarios/bookinfo/domain.yaml',
     writeOutput: config.writeOutput,
   });
   expect(Object.keys(result.files)).toEqual([

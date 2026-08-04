@@ -8,7 +8,7 @@ replica count to ${{ values.replicaCount }}.
 ## Current implementation
 
 The Resource selects the platform-standard `postgresql` profile at
-`resource/postgresql`. The platform supplies the physical implementation repository and revision;
+`charts/resource/postgresql`. The platform supplies the physical implementation repository and revision;
 they are intentionally absent from tenant Resource desired state.
 
 Common deployment values and explicit environment activation files live in the

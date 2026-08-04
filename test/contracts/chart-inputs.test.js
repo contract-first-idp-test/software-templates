@@ -11,14 +11,14 @@ describe('template-to-chart inputs', () => {
     expect(fs.existsSync(path.join(
       platformRoot, 'targets/workshop/domain-values.yaml'))).toBe(false);
     const target = YAML.parse(fs.readFileSync(path.join(
-      platformRoot, 'targets/workshop/catalog-info.yaml'), 'utf8'));
+      platformRoot, 'catalog-info.yaml'), 'utf8'));
     expect(target).toMatchObject({
       kind: 'Resource',
       spec: {
         type: 'contract-first-idp-target',
         platform: {
           configuration: {
-            valuesPath: 'targets/workshop/catalog-info.yaml',
+            valuesPath: 'catalog-info.yaml',
           },
         },
       },
@@ -42,7 +42,7 @@ describe('template-to-chart inputs', () => {
     expect(catalog).toContain('platformTarget: ${{ values.platformTarget }}');
 
     const application = read('skeletons/domain/platform-admission/application.yaml');
-    expect(application).toContain('path: domain');
+    expect(application).toContain('path: charts/domain/system-discovery');
     expect(application).toContain('targetRevision: ${{ values.developerChartsRevision }}');
     expect(application).toContain('$domain/catalog-info.yaml');
     expect(application).toContain('$platform/${{ values.platformTargetValuesPath }}');
@@ -59,7 +59,7 @@ describe('template-to-chart inputs', () => {
     )).toEqual({image: {tag: '${{ values.releaseVersion }}'}});
     expect(YAML.parse(
       read('skeletons/resource/implementations/postgresql/system-repo/base/values.yaml'),
-    ).implementation.path).toBe('resource/postgresql');
+    ).implementation.path).toBe('charts/resource/postgresql');
   });
 
   it('API and Component templates fetch runtime endpoints through the target', () => {

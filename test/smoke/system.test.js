@@ -8,8 +8,8 @@ test('live Backstage dry-run creates a System and build activation', async () =>
     baseUrl: config.baseUrl,
     token: config.token,
     templatePath: 'templates/system',
-    fixturePath: 'test/fixtures/basic/system.yaml',
-    domainContractPath: 'test/fixtures/nonstandard-lifecycle/domain.yaml',
+    fixturePath: 'test/fixtures/inputs/basic/system.yaml',
+    domainContractPath: 'test/fixtures/inputs/nonstandard-lifecycle/domain.yaml',
     writeOutput: config.writeOutput,
   });
   expect(parseYamlFile(result, 'system-repo/catalog-info.yaml')).toMatchObject({

@@ -3,10 +3,11 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "test": "npm run test:contracts && npm run test:skeletons",
+    "test": "jest --runInBand && npm run test:chart-compat",
     "test:contracts": "jest test/contracts --runInBand",
     "test:skeletons": "jest test/skeletons --runInBand",
     "test:chart-compat": "node test/contracts/chart-compat.js",
+    "test:remote-revision": "node test/contracts/remote-chart-revision.js",
     "test:build": "node test/build/verify-component-profiles.js",
     "test:smoke": "node test/smoke/run.js",
     "test:apicurio-live": "node test/live/apicurio.js",

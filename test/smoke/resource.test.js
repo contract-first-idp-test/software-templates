@@ -8,8 +8,8 @@ test('live Backstage dry-run creates a PostgreSQL Resource', async () => {
     baseUrl: config.baseUrl,
     token: config.token,
     templatePath: 'templates/resource',
-    fixturePath: 'test/fixtures/basic/resource.yaml',
-    domainContractPath: 'samples/bookinfo/domain.yaml',
+    fixturePath: 'test/fixtures/inputs/basic/resource.yaml',
+    domainContractPath: 'test/fixtures/scenarios/bookinfo/domain.yaml',
     writeOutput: config.writeOutput,
   });
   expect(parseYamlFile(result, 'resource-repo/catalog-info.yaml').kind).toBe('Resource');

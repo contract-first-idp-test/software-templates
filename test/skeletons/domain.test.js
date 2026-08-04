@@ -61,7 +61,7 @@ test('platform admission skeleton renders exactly three trusted repositories', a
         platformRepositoryOrganization: 'contract-first-idp',
         platformRepositoryName: 'platform-components',
         platformRepositoryRevision: 'v1.0.0',
-        platformTargetValuesPath: 'targets/workshop/catalog-info.yaml',
+        platformTargetValuesPath: 'catalog-info.yaml',
         developerChartsRepositoryUrl:
           'https://github.com/contract-first-idp/developer-charts.git',
         developerChartsRevision: 'v1.0.0',
@@ -70,6 +70,7 @@ test('platform admission skeleton renders exactly three trusted repositories', a
       },
     });
     const project = YAML.parse(await fs.readFile(path.join(destination, 'project.yaml'), 'utf8'));
+    expect(project.metadata.annotations['argocd.argoproj.io/sync-wave']).toBe('0');
     expect(project.spec.sourceRepos).toEqual([
       'https://github.com/contract-first-idp/developer-charts.git',
       'https://github.com/retail-team/retail-domain.git',
@@ -78,10 +79,12 @@ test('platform admission skeleton renders exactly three trusted repositories', a
     const application = YAML.parse(await fs.readFile(
       path.join(destination, 'application.yaml'), 'utf8'));
     expect(application.spec.sources).toHaveLength(3);
+    expect(application.metadata.annotations['argocd.argoproj.io/sync-wave']).toBe('1');
     expect(application.spec.sources[0].helm.valueFiles).toEqual([
-      '$platform/targets/workshop/catalog-info.yaml',
+      '$platform/catalog-info.yaml',
       '$domain/catalog-info.yaml',
     ]);
+    expect(application.spec.sources[0].path).toBe('charts/domain/system-discovery');
   } finally {
     await fs.rm(destination, {recursive: true, force: true});
   }

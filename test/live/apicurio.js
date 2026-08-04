@@ -41,7 +41,7 @@ async function request(url, options = {}) {
 async function main() {
   const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'cf-idp-apicurio-live-'));
   const contract = await fs.readFile(
-    path.join(root, 'samples/bookinfo/contracts/reviews.yaml'),
+    path.join(root, 'test/fixtures/scenarios/bookinfo/contracts/reviews.yaml'),
     'utf8',
   );
   let published = false;

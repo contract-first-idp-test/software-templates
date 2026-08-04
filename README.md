@@ -132,7 +132,7 @@ escaping the tenant's ownership and SCM scope.
 | [`catalog-info.yaml`](catalog-info.yaml) | Root Backstage Location that registers the active templates |
 | [`templates/`](templates/) | Backstage template definitions |
 | [`skeletons/`](skeletons/) | Generated repository and pull-request content |
-| [`samples/`](samples/) | Disabled Bookinfo and cross-System examples for smoke testing |
+| [`test/fixtures/`](test/fixtures/) | Input sets and multi-entity scenarios used only by tests |
 | [`test/contracts/`](test/contracts/) | Repository and template-to-chart contract tests |
 | [`test/skeletons/`](test/skeletons/) | Deterministic generated-source tests |
 | [`test/build/`](test/build/) | Explicit Maven baseline verification |
@@ -146,8 +146,15 @@ promotes a release.
 
 ## Backstage integration
 
-Register [`catalog-info.yaml`](catalog-info.yaml) as a Backstage Location. It registers the seven
-golden paths listed above; sample entities remain disabled until explicitly registered.
+Developer Hub's GitHub provider discovers `/catalog-info.yaml` across its configured organization,
+including this repository's Location. Each Domain, System, API, Component, and Resource golden path
+also immediately registers the generated repository-root `catalog-info.yaml` after publication.
+Provider discovery supplies broad discovery and recovery; Scaffolder registration supplies prompt
+task feedback and works when the generated repository is outside the provider organization.
+
+Test data lives only under `test/fixtures/` and is never registered by the production catalog.
+Generated GitOps entrypoints reference developer charts through the canonical
+`charts/<entity>/<responsibility>` path convention.
 
 The following action IDs must be available to the Backstage scaffolder:
 
@@ -162,7 +169,8 @@ The following action IDs must be available to the Backstage scaffolder:
 | Troubleshoot template execution | `debug:log` |
 
 GitHub is the primary SCM: configure Backstage's GitHub integration for repository publication,
-pull requests, team access, and webhooks. Register a typed platform target Resource before running
+pull requests, team access, webhooks, and root catalog discovery. Register a typed platform target
+Resource before running
 the Domain golden path. No project-specific scaffolder action is required. Install
 `@backstage/plugin-scaffolder-backend-module-github` and
 `@roadiehq/scaffolder-backend-module-utils`, along with the Backstage catalog and fetch action
@@ -178,6 +186,13 @@ the target itself requires no secondary fetch or parse.
 > **Gitea compatibility:** A Gitea compatibility plugin can expose the GitHub-compatible actions
 > used by these templates. The checked-in lab configuration uses that integration; GitHub users do
 > not need it.
+
+The deterministic suite and all fixtures use the singular `test/` directory:
+
+```bash
+npm ci
+npm test
+```
 
 ## Current limitations
 

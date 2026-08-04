@@ -8,7 +8,7 @@ test('live Backstage dry-run creates a Domain repository', async () => {
     baseUrl: config.baseUrl,
     token: config.token,
     templatePath: 'templates/domain',
-    fixturePath: 'test/fixtures/basic/domain.yaml',
+    fixturePath: 'test/fixtures/inputs/basic/domain.yaml',
     writeOutput: config.writeOutput,
   });
   const domain = parseYamlFile(result, 'domain-repo/catalog-info.yaml');
@@ -20,9 +20,10 @@ test('live Backstage dry-run creates a Domain repository', async () => {
   expect(domain.spec.environments.definitions.prod.namespaceSuffix).toBe('');
   expect(domain.spec.platformTarget).toBe('resource:default/workshop');
   expect(domain.spec).not.toHaveProperty('schemaRegistry');
-  expect(result.files.filter(file => file.path.startsWith('domain-repo/environments/')))
+  const generatedFiles = Object.keys(result.files);
+  expect(generatedFiles.filter(file => file.startsWith('domain-repo/environments/')))
     .toHaveLength(0);
-  expect(result.files.map(file => file.path)).toEqual(expect.arrayContaining([
+  expect(generatedFiles).toEqual(expect.arrayContaining([
     'platform-pr/tenants/cf-idp-tenant/project.yaml',
     'platform-pr/tenants/cf-idp-tenant/application.yaml',
   ]));

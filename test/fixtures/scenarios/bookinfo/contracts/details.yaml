@@ -100,4 +100,4 @@ tags:
       description: Information about a product (in this case a book)
 externalDocs:
     description: Learn more about the Istio BookInfo application
-    url: https://istio.io/docs/samples/bookinfo.html
+    url: https://istio.io/docs/test/fixtures/scenarios/bookinfo.html

@@ -8,22 +8,15 @@ const addFormats = require('ajv-formats');
 const YAML = require('yaml');
 
 const root = path.resolve(__dirname, '../..');
-const charts = process.env.DEVELOPER_CHARTS_DIR;
-if (!charts) {
-  console.error(
-    'DEVELOPER_CHARTS_DIR is required. Point it at a developer-charts checkout; ' +
-    'this command explicitly checks template/chart compatibility.',
-  );
-  process.exit(2);
-}
+const charts = process.env.DEVELOPER_CHARTS_DIR || '../developer-charts';
 const chartsRoot = path.resolve(root, charts);
-if (!fs.existsSync(path.join(chartsRoot, 'domain/Chart.yaml'))) {
+if (!fs.existsSync(path.join(chartsRoot, 'charts/domain/system-discovery/Chart.yaml'))) {
   console.error(`DEVELOPER_CHARTS_DIR is not a developer-charts checkout: ${chartsRoot}`);
   process.exit(2);
 }
 const platformRoot = path.resolve(
   root, process.env.PLATFORM_COMPONENTS_DIR || '../platform-components');
-const targetPath = path.join(platformRoot, 'targets/workshop/catalog-info.yaml');
+const targetPath = path.join(platformRoot, 'catalog-info.yaml');
 if (!fs.existsSync(targetPath)) {
   console.error(`Workshop target catalog does not exist: ${targetPath}`);
   process.exit(2);
@@ -78,9 +71,19 @@ const catalogSource = fs.readFileSync(
   path.join(root, 'skeletons/domain/base/catalog-info.yaml'), 'utf8');
 const tenantCatalog = YAML.parse(environment.renderString(catalogSource, {values}));
 const targetCatalog = YAML.parse(fs.readFileSync(targetPath, 'utf8'));
+const domainChartMetadata = YAML.parse(fs.readFileSync(
+  path.join(chartsRoot, 'charts/domain/system-discovery/Chart.yaml'), 'utf8'));
+if (targetCatalog.spec.platform.dependencies.developerCharts.revision !==
+    `v${domainChartMetadata.version}`) {
+  throw new Error('Platform developer-charts revision does not match distributed chart versions');
+}
+if (targetCatalog.spec.platform.dependencies.softwareTemplates.catalogPath !==
+    'catalog-info.yaml') {
+  throw new Error('Platform software-template dependency lost the root catalog convention');
+}
 const mergedDomainValues = mergeValues(targetCatalog, tenantCatalog);
 const domainSchema = JSON.parse(fs.readFileSync(
-  path.join(chartsRoot, 'domain/values.schema.json'), 'utf8'));
+  path.join(chartsRoot, 'charts/domain/system-discovery/values.schema.json'), 'utf8'));
 const ajv = new Ajv({allErrors: true, strict: false});
 addFormats(ajv);
 const validateDomainValues = ajv.compile(domainSchema);
@@ -93,7 +96,8 @@ if (!validateDomainValues(mergedDomainValues)) {
 if (mergedDomainValues.spec.type !== 'contract-first-idp-target') {
   throw new Error('Real merged values did not retain target spec.type');
 }
-console.log(`Real target/Domain values pass ${path.join(chartsRoot, 'domain/values.schema.json')}`);
+console.log(`Real target/Domain values pass ${path.join(
+  chartsRoot, 'charts/domain/system-discovery/values.schema.json')}`);
 
 if (process.env.CHART_COMPAT_SCHEMA_ONLY === '1') {
   console.log('Direct JSON Schema compatibility passed; Helm checks were not requested.');
@@ -135,7 +139,7 @@ function renderChart(chart, documents) {
 }
 
 try {
-  const domainResources = renderChart('domain', [
+  const domainResources = renderChart('charts/domain/system-discovery', [
     targetCatalog,
     tenantCatalog,
   ]);
@@ -173,7 +177,7 @@ try {
       production: {namespaceSuffix: '', clusterDomain: 'apps.example'},
     },
   };
-  const systemResources = renderChart('system', [{
+  const systemResources = renderChart('charts/system/environment', [{
     domainName: 'retail',
     systemName: systemDeclaration.systemName,
     groupId: systemDeclaration.groupId,
@@ -225,7 +229,7 @@ try {
     fs.readFileSync(path.join(root, 'skeletons/api/system-repo/values.yaml'), 'utf8'),
     {values: {apiRepoCloneUrl: 'https://tenant.example/retail-team/orders-api.git'}},
   ));
-  const apiResources = renderChart('api/specification-build', [{
+  const apiResources = renderChart('charts/api/specification-build', [{
     ...apiValues,
     systemName: 'orders',
     groupId: 'com.example.orders',
@@ -256,7 +260,7 @@ try {
       },
     },
   ));
-  const componentEnvironmentResources = renderChart('component/environment', [{
+  const componentEnvironmentResources = renderChart('charts/component/environment', [{
     ...componentEnvironmentValues,
     systemName: 'orders',
     componentName: 'checkout',
@@ -281,7 +285,7 @@ try {
     fs.readFileSync(path.join(root, relative), 'utf8'),
     {values: componentValues},
   );
-  renderChart('component/runtime', [
+  renderChart('charts/component/runtime', [
     render('skeletons/component/system-repo/base/values.yaml'),
     render('skeletons/component/system-repo/environment/${{ values.environment }}.yaml'),
     render('skeletons/component/promotion/${{ values.targetEnvironment }}.yaml'),
@@ -314,7 +318,7 @@ try {
     fs.readFileSync(path.join(root, relative), 'utf8'),
     {values: resourceValues},
   );
-  renderChart('resource/postgresql', [
+  renderChart('charts/resource/postgresql', [
     renderResource(
       'skeletons/resource/implementations/postgresql/system-repo/base/values.yaml'),
     renderResource(

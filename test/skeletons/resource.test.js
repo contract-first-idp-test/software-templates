@@ -46,7 +46,7 @@ test('Resource skeleton renders PostgreSQL catalog and desired-state values', as
     expect(YAML.parse(await fs.readFile(
       path.join(destination, 'desired-state/values.yaml'), 'utf8')))
       .toMatchObject({
-        implementation: {path: 'resource/postgresql'},
+        implementation: {path: 'charts/resource/postgresql'},
         instances: {replicas: 2},
         user: {name: 'orders_owner', database: 'orders'},
       });

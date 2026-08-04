@@ -114,4 +114,4 @@ tags:
         description: Review information for a product
 externalDocs:
     description: Learn more about the Istio BookInfo application
-    url: 'https://istio.io/docs/samples/bookinfo.html'
+    url: 'https://istio.io/docs/test/fixtures/scenarios/bookinfo.html'

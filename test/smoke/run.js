@@ -21,7 +21,21 @@ if (missing.length) {
 }
 
 const jest = require.resolve('jest/bin/jest');
+const config = path.resolve(process.cwd(), 'jest.smoke.config.js');
+const discovered = spawnSync(process.execPath, [
+  jest, '--config', config, '--listTests', '--runInBand',
+], {encoding: 'utf8'});
+if (discovered.status !== 0) {
+  process.stderr.write(discovered.stderr || discovered.stdout || 'Jest test discovery failed.\n');
+  process.exit(discovered.status ?? 1);
+}
+const tests = discovered.stdout.split(/\r?\n/).filter(Boolean);
+if (tests.length === 0) {
+  console.error('The Backstage smoke configuration discovered zero tests.');
+  process.exit(3);
+}
+console.log(`Running ${tests.length} Backstage smoke test files.`);
 const result = spawnSync(process.execPath, [
-  jest, 'test/smoke', '--runInBand',
+  jest, '--config', config, '--runInBand',
 ], {stdio: 'inherit'});
 process.exit(result.status ?? 1);

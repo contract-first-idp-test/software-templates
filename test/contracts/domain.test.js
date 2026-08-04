@@ -5,7 +5,7 @@ const {validateDomainEnvironmentContract} = require('../utils/domainContract');
 
 const root = path.resolve(__dirname, '../..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
-const fixture = () => YAML.parse(read('test/fixtures/nonstandard-lifecycle/domain.yaml'));
+const fixture = () => YAML.parse(read('test/fixtures/inputs/nonstandard-lifecycle/domain.yaml'));
 
 describe('portable Domain and admission contracts', () => {
   it('accepts a consistent nonstandard lifecycle without cluster endpoints', () => {

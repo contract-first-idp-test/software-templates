@@ -8,8 +8,8 @@ test('live Backstage dry-run creates an API from a complete document', async () 
     baseUrl: config.baseUrl,
     token: config.token,
     templatePath: 'templates/api',
-    fixturePath: 'test/fixtures/basic/api.yaml',
-    domainContractPath: 'test/fixtures/nonstandard-lifecycle/domain.yaml',
+    fixturePath: 'test/fixtures/inputs/basic/api.yaml',
+    domainContractPath: 'test/fixtures/inputs/nonstandard-lifecycle/domain.yaml',
     writeOutput: config.writeOutput,
   });
   expect(parseYamlFile(result, 'api-repo/catalog-info.yaml').kind).toBe('API');

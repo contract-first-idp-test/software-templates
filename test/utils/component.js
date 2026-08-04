@@ -21,9 +21,9 @@ function componentDryRunOverrides(profile) {
 }
 
 const componentRegistryFixtures = [
-  'samples/cross-system/contracts/authorization.yaml',
-  'samples/bookinfo/contracts/details.yaml',
-  'samples/cross-system/contracts/vendor-details.yaml',
+  'test/fixtures/scenarios/cross-system/contracts/authorization.yaml',
+  'test/fixtures/scenarios/bookinfo/contracts/details.yaml',
+  'test/fixtures/scenarios/cross-system/contracts/vendor-details.yaml',
 ];
 
 module.exports = {componentDryRunOverrides, componentRegistryFixtures};

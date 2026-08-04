@@ -19,15 +19,16 @@ npm ci
 npm test
 ```
 
-The default command runs:
+The default command runs the Jest suites followed by chart compatibility:
 
 | Suite | Command | Covers |
 | --- | --- | --- |
 | Repository contracts | `npm run test:contracts` | Registered templates, metadata, actions, and file contracts |
 | Skeleton rendering | `npm run test:skeletons` | Representative generated repositories and profile-specific output |
+| Chart compatibility | `npm run test:chart-compat` | Root target, generated values, schemas, and canonical chart paths |
 
-These tests do not require a live Backstage instance, cluster, Schema Registry, or companion chart
-checkout.
+These tests do not require a live Backstage instance, cluster, or Schema Registry. Keep the
+coordinated `developer-charts` checkout beside this repository for the compatibility stage.
 
 ## Template-to-chart compatibility
 
@@ -39,6 +40,15 @@ DEVELOPER_CHARTS_DIR=../developer-charts npm run test:chart-compat
 
 Use this whenever changing a generated Domain entrypoint, System discovery file, Component values,
 Resource values, or any chart value passed by a template.
+
+Verify the configured remote `v1.0.0` release boundary separately:
+
+```bash
+npm run test:remote-revision
+```
+
+The coordinated repositories intentionally support only `v1.0.0`; the tag must be moved to the
+new coordinated commits before the release-boundary check and workflows can pass.
 
 Helm implementation behavior belongs in `developer-charts`; this repository verifies the producer
 side of the shared contract.
@@ -64,8 +74,9 @@ npm run test:smoke
 ```
 
 The suite exercises Backstage rendering only. It does not execute Git mutations, Tekton,
-Apicurio, Argo CD, or image promotion. Required sample entities under `samples/` must be registered
-separately because the root catalog intentionally leaves them disabled. System environment
+Apicurio, Argo CD, or image promotion. Required fixture entities under `test/fixtures/scenarios/`
+must be registered separately in the live test environment; production catalog metadata never
+references the fixture tree. System environment
 activation is not currently covered by the smoke suite.
 
 Retain dry-run workspaces for troubleshooting:

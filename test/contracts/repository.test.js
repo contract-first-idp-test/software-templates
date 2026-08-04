@@ -46,6 +46,7 @@ describe('registered template contracts', () => {
 
   it('parses the catalog and every registered template', () => {
     expect(catalog.kind).toBe('Location');
+    expect(read('catalog-info.yaml')).not.toContain('test/fixtures/');
     expect(targets.length).toBeGreaterThan(0);
     for (const target of targets) {
       const templatePath = path.resolve(root, target);
@@ -82,6 +83,20 @@ describe('registered template contracts', () => {
       for (const collaborator of publish.input.collaborators) {
         expect(['push', 'pull']).toContain(collaborator.access);
       }
+    }
+  });
+
+  it('immediately registers every generated root catalog entity', () => {
+    for (const name of ['domain', 'system', 'api', 'component', 'resource']) {
+      const template = YAML.parse(read(`templates/${name}/template.yaml`));
+      const registration = template.spec.steps.filter(step =>
+        step.action === 'catalog:register');
+      expect(registration).toHaveLength(1);
+      expect(registration[0].input).toMatchObject({
+        catalogInfoPath: 'catalog-info.yaml',
+      });
+      const publish = template.spec.steps.find(step => step.action === 'publish:github');
+      expect(publish.input.sourcePath).toMatch(/-repo$/);
     }
   });
 

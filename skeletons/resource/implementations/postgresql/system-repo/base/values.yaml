@@ -1,7 +1,7 @@
 profile: postgresql
 resourceName: ${{ values.resourceName }}
 implementation:
-  path: resource/postgresql
+  path: charts/resource/postgresql
 postgresVersion: ${{ values.postgresVersion }}
 instances:
   replicas: ${{ values.replicaCount }}

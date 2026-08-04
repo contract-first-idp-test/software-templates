@@ -58,6 +58,10 @@ Domain. APIs define communication contracts independently; Components implement 
 Resources represent managed dependencies. Catalog relationships are intentionally unversioned,
 while generated `api-dependencies.yaml` records a Component's reviewable contract versions.
 
+Every entity-producing repository stores its primary descriptor at `/catalog-info.yaml`. Golden
+paths immediately register that file, while the organization-wide GitHub provider independently
+discovers the same root convention for broad discovery and recovery.
+
 The API, Component, and Resource nodes are peers under a System. Their provider and consumer
 relationships are catalog metadata, not another containment level.
 
