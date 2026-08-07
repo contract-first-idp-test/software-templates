@@ -34,7 +34,7 @@ documentation and UI must make that transition visible.
 | Use Git as the handoff | Backstage should capture intent and finish after creating a reviewable SCM change, not remain connected while several platform controllers complete their work. Git outlives the scaffolder task, provides audit and approval history, and lets reconciliation resume after transient failures. Backstage completion therefore confirms the Git change, not runtime readiness. |
 | Keep API contracts independent | A contract is a product shared by providers and consumers, not an implementation detail of either side. Giving it a repository and release history allows parallel development, independent compatibility review, and explicit floating or immutable version selection. Backstage relationships remain unversioned, while `api-dependencies.yaml` records the versions a Component actually selected. |
 | Derive child ownership and SCM identity from the Domain | The Domain already establishes the organization, repository host, teams, and lifecycle for the tenant. Reusing that information removes repetitive form choices and prevents a child entity from acquiring contradictory ownership or publishing outside the tenant's SCM scope. Moving an entity elsewhere is treated as an administrative migration rather than an ordinary golden-path option. |
-| Encode lifecycle changes as small file-presence signals | System activation, Component release, and Resource provisioning are easier to review when each is represented by a narrow file whose presence has one defined meaning. ApplicationSets can discover those files directly without maintaining a generated central manifest. Because absence is also meaningful, the paths are treated as a versioned contract and covered by deterministic tests. |
+| Encode lifecycle changes as small files | System activation, Component environment activation and release selection, and Resource provisioning are easier to review when each has one narrow file. ApplicationSets discover activation files directly; optional Component release files are merged into the already active Component Application. The paths remain a versioned, tested contract. |
 | Keep release overlays artifact-only | A release file answers one question: which versioned artifact should run in this environment. Runtime configuration remains in common and environment values, so promotion cannot unexpectedly alter replicas, Routes, health checks, or Secret references. Rollback selects an older release without reverting unrelated configuration. |
 | Compose existing Backstage action modules | GitHub actions handle repository operations, while RoadieHQ utility actions perform declarative contract transformations. This keeps the golden paths on maintained integrations and avoids project-specific action code with its own security and upgrade lifecycle. Organization administration and Git tag creation stay outside the templates because they require different privileges and are not safely covered by the available action set. |
 | Keep Backstage out of the cluster | Repository credentials are sufficient for scaffolding and pull requests; giving the same process Kubernetes credentials would increase privilege and encourage imperative deployment steps. A platform administrator admits Domain entrypoints through cluster GitOps, after which Argo CD owns reconciliation. |
@@ -119,7 +119,7 @@ directly:
 | Reconciliation layer | Reads | Produces |
 | --- | --- | --- |
 | Domain | Domain lifecycle, selected environment, System activation files, and the Domain chart | One System Application for each active System |
-| System | System desired-state files, environment policy, and the System chart | Independent API, Component environment, Component runtime, and Resource Applications |
+| System | System desired-state files, environment policy, and the System chart | API, one Application per Component environment, and Resource Applications |
 | Leaf | Entity-specific values and the corresponding trusted chart | Tekton, registry, workload, and managed-Resource objects on OpenShift |
 
 No chart writes back to Git.
@@ -140,8 +140,8 @@ File presence is a deliberate API between the templates and charts.
 | --- | --- |
 | `apis/<api>/values.yaml` | Configure validation and Schema Registry publication |
 | `components/<component>/values.yaml` | Hold team-owned values shared across environments |
-| `components/<component>/environments/<environment>.yaml` | Create environment-local registry infrastructure and runtime configuration |
-| `components/<component>/releases/<environment>.yaml` | Select one versioned runtime artifact |
+| `components/<component>/environments/<environment>.yaml` | Create one OpenJDK Component Application, its ImageStream, and environment configuration |
+| Optional `components/<component>/releases/<environment>.yaml` | Select one runtime artifact; workload resources require this `image.tag` |
 | `resources/<profile>/<resource>/values.yaml` | Hold common Resource intent |
 | `resources/<profile>/<resource>/environments/<environment>.yaml` | Provision the Resource in that environment |
 
@@ -154,6 +154,9 @@ image:
 
 Promotion never rewrites replicas, Routes, resource requests, health checks, or Secret references.
 Rollback selects an older release tag through the same reviewable mechanism.
+
+The build-environment release may select `latest`; promoted environments use human release tags.
+There is no separate Component infrastructure Application.
 
 ## Environment lifecycle
 

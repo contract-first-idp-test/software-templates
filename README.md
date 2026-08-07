@@ -140,8 +140,9 @@ Provider discovery supplies broad discovery and recovery; Scaffolder registratio
 task feedback and works when the generated repository is outside the provider organization.
 
 Test data lives only under `test/fixtures/` and is never registered by the production catalog.
-Generated GitOps entrypoints reference developer charts through the canonical
-`charts/<entity>/<responsibility>` path convention.
+Generated GitOps entrypoints use the released chart structure explicitly:
+`domain/environment`, `system/environment`, `api/openapi`, `component/openjdk`, and
+`resource/postgresql` under `charts/`.
 
 The following action IDs must be available to the Backstage scaffolder:
 

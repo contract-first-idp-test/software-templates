@@ -12,10 +12,9 @@ const target = YAML.parse(fs.readFileSync(
 const dependency = target.spec.platform.dependencies.developerCharts;
 const charts = target.spec.platform.charts;
 const requiredCharts = [
-  'charts/api/specification-build/Chart.yaml',
-  'charts/component/environment/Chart.yaml',
-  'charts/component/runtime/Chart.yaml',
-  'charts/domain/system-discovery/Chart.yaml',
+  'charts/api/openapi/Chart.yaml',
+  'charts/component/openjdk/Chart.yaml',
+  'charts/domain/environment/Chart.yaml',
   'charts/resource/postgresql/Chart.yaml',
   'charts/system/environment/Chart.yaml',
 ];

@@ -10,7 +10,7 @@ const {repositoryRoot: root} = require('../helpers/paths');
 
 const charts = process.env.DEVELOPER_CHARTS_DIR || '../developer-charts';
 const chartsRoot = path.resolve(root, charts);
-if (!fs.existsSync(path.join(chartsRoot, 'charts/domain/system-discovery/Chart.yaml'))) {
+if (!fs.existsSync(path.join(chartsRoot, 'charts/domain/environment/Chart.yaml'))) {
   console.error(`DEVELOPER_CHARTS_DIR is not a developer-charts checkout: ${chartsRoot}`);
   process.exit(2);
 }
@@ -72,7 +72,7 @@ const catalogSource = fs.readFileSync(
 const tenantCatalog = YAML.parse(environment.renderString(catalogSource, {values}));
 const targetCatalog = YAML.parse(fs.readFileSync(targetPath, 'utf8'));
 const domainChartMetadata = YAML.parse(fs.readFileSync(
-  path.join(chartsRoot, 'charts/domain/system-discovery/Chart.yaml'), 'utf8'));
+  path.join(chartsRoot, 'charts/domain/environment/Chart.yaml'), 'utf8'));
 if (targetCatalog.spec.platform.dependencies.developerCharts.revision !==
     `v${domainChartMetadata.version}`) {
   throw new Error('Platform developer-charts revision does not match distributed chart versions');
@@ -83,7 +83,7 @@ if (targetCatalog.spec.platform.dependencies.softwareTemplates.catalogPath !==
 }
 const mergedDomainValues = mergeValues(targetCatalog, tenantCatalog);
 const domainSchema = JSON.parse(fs.readFileSync(
-  path.join(chartsRoot, 'charts/domain/system-discovery/values.schema.json'), 'utf8'));
+  path.join(chartsRoot, 'charts/domain/environment/values.schema.json'), 'utf8'));
 const ajv = new Ajv({allErrors: true, strict: false});
 addFormats(ajv);
 const validateDomainValues = ajv.compile(domainSchema);
@@ -97,7 +97,7 @@ if (mergedDomainValues.spec.type !== 'contract-first-idp-target') {
   throw new Error('Real merged values did not retain target spec.type');
 }
 console.log(`Real target/Domain values pass ${path.join(
-  chartsRoot, 'charts/domain/system-discovery/values.schema.json')}`);
+  chartsRoot, 'charts/domain/environment/values.schema.json')}`);
 
 if (process.env.CHART_COMPAT_SCHEMA_ONLY === '1') {
   console.log('Direct JSON Schema compatibility passed; Helm checks were not requested.');
@@ -139,7 +139,7 @@ function renderChart(chart, documents) {
 }
 
 try {
-  const domainResources = renderChart('charts/domain/system-discovery', [
+  const domainResources = renderChart('charts/domain/environment', [
     targetCatalog,
     tenantCatalog,
   ]);
@@ -229,7 +229,7 @@ try {
     fs.readFileSync(path.join(root, 'skeletons/api/system-repo/values.yaml'), 'utf8'),
     {values: {apiRepoCloneUrl: 'https://tenant.example/retail-team/orders-api.git'}},
   ));
-  const apiResources = renderChart('charts/api/specification-build', [{
+  const apiResources = renderChart('charts/api/openapi', [{
     ...apiValues,
     systemName: 'orders',
     groupId: 'com.example.orders',
@@ -242,32 +242,6 @@ try {
   if (!apiResources.some(resource =>
     resource.kind === 'Pipeline' || resource.kind === 'EventListener')) {
     throw new Error('Generated API values did not render a Pipeline or trigger resource');
-  }
-
-  const componentEnvironmentValues = YAML.parse(environment.renderString(
-    fs.readFileSync(
-      path.join(
-        root,
-        'skeletons/component/system-repo/environment/${{ values.environment }}.yaml',
-      ),
-      'utf8',
-    ),
-    {
-      values: {
-        environment: 'stage',
-        buildEnvironment: 'sandbox',
-        implementationProfile: 'quarkus-camel-openapi',
-      },
-    },
-  ));
-  const componentEnvironmentResources = renderChart('charts/component/environment', [{
-    ...componentEnvironmentValues,
-    systemName: 'orders',
-    componentName: 'checkout',
-    environment: 'stage',
-  }]);
-  if (!componentEnvironmentResources.some(resource => resource.kind === 'ImageStream')) {
-    throw new Error('Generated Component environment values did not render an ImageStream');
   }
 
   const componentValues = {
@@ -285,7 +259,62 @@ try {
     fs.readFileSync(path.join(root, relative), 'utf8'),
     {values: componentValues},
   );
-  renderChart('charts/component/runtime', [
+
+  const componentEnvironmentResources = renderChart('charts/component/openjdk', [
+    render('skeletons/component/system-repo/base/values.yaml'),
+    render('skeletons/component/system-repo/environment/${{ values.environment }}.yaml'),
+    {
+      systemName: 'orders',
+      componentName: 'checkout',
+      environment: 'stage',
+      namespace: 'orders-preprod',
+      image: {repository: 'quay.example/west_orders-preprod/checkout'},
+      build: {
+        environment: 'sandbox',
+        serviceAccountName: 'orders-build',
+        registryPushSecretName: 'destination-registry-auth',
+      },
+      promotion: {sourceEnvironment: 'sandbox'},
+    },
+  ]);
+  if (!componentEnvironmentResources.some(resource => resource.kind === 'ImageStream') ||
+      componentEnvironmentResources.some(resource =>
+        ['Deployment', 'Service', 'Route'].includes(resource.kind))) {
+    throw new Error('Environment-only Component state did not render only its ImageStream');
+  }
+
+  const buildComponentValues = {...componentValues, environment: 'sandbox', buildEnabled: true};
+  const renderBuildComponent = relative => environment.renderString(
+    fs.readFileSync(path.join(root, relative), 'utf8'),
+    {values: buildComponentValues},
+  );
+  const buildComponentResources = renderChart('charts/component/openjdk', [
+    renderBuildComponent('skeletons/component/system-repo/base/values.yaml'),
+    renderBuildComponent(
+      'skeletons/component/system-repo/environment/${{ values.environment }}.yaml'),
+    renderBuildComponent(
+      'skeletons/component/system-repo/base/releases/${{ values.buildEnvironment }}.yaml'),
+    {
+      systemName: 'orders',
+      componentName: 'checkout',
+      environment: 'sandbox',
+      namespace: 'orders-build',
+      image: {repository: 'quay.example/west_orders-build/checkout'},
+      build: {
+        environment: 'sandbox',
+        imageRepository: 'quay.example/west_orders-build/checkout',
+        serviceAccountName: 'orders-build',
+        registryPushSecretName: 'destination-registry-auth',
+      },
+    },
+  ]);
+  for (const kind of ['ImageStream', 'Pipeline', 'Deployment', 'Service', 'Route']) {
+    if (!buildComponentResources.some(resource => resource.kind === kind)) {
+      throw new Error(`Build Component state did not render ${kind}`);
+    }
+  }
+
+  const promotedComponentResources = renderChart('charts/component/openjdk', [
     render('skeletons/component/system-repo/base/values.yaml'),
     render('skeletons/component/system-repo/environment/${{ values.environment }}.yaml'),
     render('skeletons/component/promotion/${{ values.targetEnvironment }}.yaml'),
@@ -303,6 +332,11 @@ try {
       promotion: {sourceEnvironment: 'sandbox'},
     },
   ]);
+  for (const kind of ['ImageStream', 'Deployment', 'Service', 'Route', 'Job']) {
+    if (!promotedComponentResources.some(resource => resource.kind === kind)) {
+      throw new Error(`Promoted Component state did not render ${kind}`);
+    }
+  }
 
   const resourceValues = {
     resourceName: 'orders-db',

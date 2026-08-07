@@ -26,7 +26,7 @@ describe('template-to-chart inputs', () => {
     expect(catalog).toContain('platformTarget: ${{ values.platformTarget }}');
 
     const application = read('skeletons/domain/platform-admission/application.yaml');
-    expect(application).toContain('path: charts/domain/system-discovery');
+    expect(application).toContain('path: charts/domain/environment');
     expect(application).toContain('targetRevision: ${{ values.developerChartsRevision }}');
     expect(application).toContain('$domain/catalog-info.yaml');
     expect(application).toContain('$platform/${{ values.platformTargetValuesPath }}');

@@ -12,7 +12,7 @@ spec:
   sources:
     - repoURL: ${{ values.developerChartsRepositoryUrl }}
       targetRevision: ${{ values.developerChartsRevision }}
-      path: charts/domain/system-discovery
+      path: charts/domain/environment
       helm:
         valueFiles:
           - $platform/${{ values.platformTargetValuesPath }}

@@ -83,7 +83,7 @@ test('platform admission skeleton renders exactly three trusted repositories', a
       '$platform/catalog-info.yaml',
       '$domain/catalog-info.yaml',
     ]);
-    expect(application.spec.sources[0].path).toBe('charts/domain/system-discovery');
+    expect(application.spec.sources[0].path).toBe('charts/domain/environment');
   } finally {
     await fs.rm(destination, {recursive: true, force: true});
   }

@@ -28,7 +28,7 @@ describe('generated Git output is consumed at the exact coordinated paths', () =
       producer: ['templates/system/template.yaml',
         'targetPath: domain-pr/systems/${{ parameters.systemName }}/environments'],
       output: ['skeletons/system/domain-repo/${{ values.environment }}.yaml'],
-      consumer: ['charts/domain/system-discovery/templates/applicationset.yaml',
+      consumer: ['charts/domain/environment/templates/applicationset.yaml',
         'path: systems/*/environments/{{ $environment }}.yaml'],
     },
     {
@@ -44,7 +44,7 @@ describe('generated Git output is consumed at the exact coordinated paths', () =
       producer: ['templates/component/template.yaml',
         'targetPath: system-pr/components/${{ parameters.componentName }}/environments'],
       output: ['skeletons/component/system-repo/environment/${{ values.environment }}.yaml'],
-      consumer: ['charts/system/environment/templates/component-environment-applicationset.yaml',
+      consumer: ['charts/system/environment/templates/component-applicationset.yaml',
         'path: components/*/environments/{{ .Values.environment.name }}.yaml'],
     },
     {
@@ -61,7 +61,7 @@ describe('generated Git output is consumed at the exact coordinated paths', () =
         'targetPath: system-pr/components/${{ steps.fetchComponent.output.entity.metadata.name }}/releases'],
       output: ['skeletons/component/promotion/${{ values.targetEnvironment }}.yaml'],
       consumer: ['charts/system/environment/templates/component-applicationset.yaml',
-        'path: components/*/releases/{{ .Values.environment.name }}.yaml'],
+        "'$values/components/{{ \"{{ index .path.segments 1 }}\" }}/releases/{{ .Values.environment.name }}.yaml'"],
     },
     {
       entity: 'Resource base',
@@ -92,7 +92,7 @@ describe('generated Git output is consumed at the exact coordinated paths', () =
     expect(fs.existsSync(path.join(
       root, 'skeletons/system/domain-repo/${{ values.environment }}.yaml'))).toBe(true);
     expect(read(
-      chartsRoot, 'charts/domain/system-discovery/templates/applicationset.yaml',
+      chartsRoot, 'charts/domain/environment/templates/applicationset.yaml',
     )).toContain('path: systems/*/environments/{{ $environment }}.yaml');
   });
 

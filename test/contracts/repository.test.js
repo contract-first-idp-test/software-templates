@@ -106,7 +106,7 @@ describe('registered template contracts', () => {
         step.action === 'catalog:register');
       expect(registration).toHaveLength(1);
       expect(registration[0].input).toMatchObject({
-        catalogInfoPath: 'catalog-info.yaml',
+        repoContentsUrl: '${{ steps.publish.output.repoContentsUrl }}',
       });
       const publish = template.spec.steps.find(step => step.action === 'publish:github');
       expect(publish.input.sourcePath).toMatch(/-repo$/);
