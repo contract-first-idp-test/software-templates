@@ -7,7 +7,7 @@ metadata:
   annotations: {backstage-gitea.io/github-compatible: 'true'}
   tags: [contract-first, domain, tenant]
 spec:
-  owner: group:default/platform-engineering
+  owner: group:default/platform-maintainers
   type: domain
   parameters:
     - title: Tenant identity and platform target
@@ -120,10 +120,33 @@ spec:
         description: ${{ parameters.description }}
         defaultBranch: main
         repoVisibility: public
-        protectDefaultBranch: false
+        protectDefaultBranch: true
+        requiredApprovingReviewCount: 0
+        protectEnforceAdmins: true
         collaborators:
-          - {team: '${{ parameters.domainName }}-maintainers', access: push}
-          - {team: '${{ parameters.domainName }}-viewers', access: pull}
+          - {team: domain-maintainers, access: maintain}
+          - {team: domain-contributors, access: push}
+          - {team: domain-viewers, access: pull}
+    - id: applicationWebhook
+      name: Notify Argo CD on Domain changes
+      action: github:webhook
+      input:
+        repoUrl: github.com?owner=${{ parameters.organization }}&repo=${{ parameters.domainName }}-domain
+        webhookUrl: ${{ steps.fetchTarget.output.entity.spec.platform.argocd.webhooks.application }}
+        events: [push]
+        active: true
+        contentType: json
+        insecureSsl: false
+    - id: applicationSetWebhook
+      name: Notify ApplicationSet on Domain changes
+      action: github:webhook
+      input:
+        repoUrl: github.com?owner=${{ parameters.organization }}&repo=${{ parameters.domainName }}-domain
+        webhookUrl: ${{ steps.fetchTarget.output.entity.spec.platform.argocd.webhooks.applicationSet }}
+        events: [push]
+        active: true
+        contentType: json
+        insecureSsl: false
     - id: register
       name: Register tenant Domain
       action: catalog:register

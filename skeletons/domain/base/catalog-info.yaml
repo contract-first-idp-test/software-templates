@@ -14,7 +14,7 @@ metadata:
       title: Domain repository
       icon: github
 spec:
-  owner: group:default/${{ values.domainName }}-maintainers
+  owner: group:default/domain-maintainers
   platformTarget: ${{ values.platformTarget }}
   groupId: ${{ values.groupId }}
   environments:

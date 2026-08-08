@@ -88,14 +88,72 @@ describe('registered template contracts', () => {
     }
   });
 
+  it('delegates GitHub App authentication to the configured integration', () => {
+    for (const target of targets) {
+      const template = YAML.parse(read(target));
+      for (const step of template.spec.steps || []) {
+        expect(step.input || {}).not.toHaveProperty('token');
+        expect(YAML.stringify(step)).not.toMatch(/GITHUB_TOKEN|GITHUB_ORG/);
+      }
+    }
+  });
+
   it('uses GitHub permission slugs for generated team access', () => {
     for (const name of ['domain', 'system', 'api', 'component', 'resource']) {
       const template = YAML.parse(read(`templates/${name}/template.yaml`));
       const publish = template.spec.steps.find(step => step.action === 'publish:github');
       expect(publish).toBeDefined();
-      for (const collaborator of publish.input.collaborators) {
-        expect(['push', 'pull']).toContain(collaborator.access);
+      expect(publish.input.collaborators).toEqual([
+        {team: 'domain-maintainers', access: 'maintain'},
+        {team: 'domain-contributors', access: 'push'},
+        {team: 'domain-viewers', access: 'pull'},
+      ]);
+      expect(publish.input).toMatchObject({
+        protectDefaultBranch: true,
+        requiredApprovingReviewCount: 0,
+        protectEnforceAdmins: true,
+      });
+    }
+  });
+
+  it('uses normalized platform and tenant ownership', () => {
+    for (const target of targets) {
+      const template = YAML.parse(read(target));
+      expect(template.spec.owner).toBe('group:default/platform-maintainers');
+    }
+    expect(read('skeletons/domain/base/catalog-info.yaml'))
+      .toContain('owner: group:default/domain-maintainers');
+    const generatedOwners = targets.flatMap(target => {
+      const template = YAML.parse(read(target));
+      return (template.spec.steps || []).filter(candidate =>
+        candidate.action === 'fetch:template').map(candidate => candidate.input.values?.owner)
+        .filter(Boolean);
+    });
+    expect(generatedOwners.length).toBeGreaterThan(0);
+    expect(new Set(generatedOwners)).toEqual(new Set(['group:default/domain-maintainers']));
+  });
+
+  it('adds both GitOps push webhooks only to Domain and System repositories', () => {
+    for (const name of ['domain', 'system']) {
+      const template = YAML.parse(read(`templates/${name}/template.yaml`));
+      const webhooks = template.spec.steps.filter(step =>
+        ['applicationWebhook', 'applicationSetWebhook'].includes(step.id));
+      expect(webhooks).toHaveLength(2);
+      expect(webhooks.map(step => step.input.webhookUrl)).toEqual([
+        '${{ steps.fetchTarget.output.entity.spec.platform.argocd.webhooks.application }}',
+        '${{ steps.fetchTarget.output.entity.spec.platform.argocd.webhooks.applicationSet }}',
+      ]);
+      for (const webhook of webhooks) {
+        expect(webhook).toMatchObject({
+          action: 'github:webhook',
+          input: {events: ['push'], active: true, contentType: 'json', insecureSsl: false},
+        });
       }
+    }
+    for (const name of ['api', 'component', 'resource']) {
+      const template = YAML.parse(read(`templates/${name}/template.yaml`));
+      expect(template.spec.steps.some(step =>
+        ['applicationWebhook', 'applicationSetWebhook'].includes(step.id))).toBe(false);
     }
   });
 

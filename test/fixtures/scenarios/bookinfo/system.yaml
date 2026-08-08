@@ -12,6 +12,6 @@ metadata:
     contract-first-idp.github.io/domain-repo: software-templates
     contract-first-idp.github.io/repository-name: bookinfo-system
 spec:
-  owner: group:default/cf-idp-integration-tests-maintainers
+  owner: group:default/domain-maintainers
   domain: domain:cf-idp-integration-tests/cf-idp-integration-tests
   groupId: io.github.cfidp.bookinfo

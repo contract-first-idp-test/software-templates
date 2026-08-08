@@ -16,7 +16,7 @@ metadata:
 spec:
   type: openapi
   lifecycle: production
-  owner: group:default/cf-idp-integration-tests-contributors
+  owner: group:default/domain-maintainers
   system: system:cf-idp-integration-tests/bookinfo
   definition:
     $text: ./contracts/productpage.yaml

@@ -33,7 +33,7 @@ documentation and UI must make that transition visible.
 | --- | --- |
 | Use Git as the handoff | Backstage should capture intent and finish after creating a reviewable SCM change, not remain connected while several platform controllers complete their work. Git outlives the scaffolder task, provides audit and approval history, and lets reconciliation resume after transient failures. Backstage completion therefore confirms the Git change, not runtime readiness. |
 | Keep API contracts independent | A contract is a product shared by providers and consumers, not an implementation detail of either side. Giving it a repository and release history allows parallel development, independent compatibility review, and explicit floating or immutable version selection. Backstage relationships remain unversioned, while `api-dependencies.yaml` records the versions a Component actually selected. |
-| Derive child ownership and SCM identity from the Domain | The Domain already establishes the organization, repository host, teams, and lifecycle for the tenant. Reusing that information removes repetitive form choices and prevents a child entity from acquiring contradictory ownership or publishing outside the tenant's SCM scope. Moving an entity elsewhere is treated as an administrative migration rather than an ordinary golden-path option. |
+| Derive child ownership and SCM identity from the Domain | The Domain establishes the organization, repository host, and lifecycle for the tenant. Every tenant entity is owned by `group:default/domain-maintainers`, and repositories use the fixed organization teams. Reusing that information removes repetitive form choices and prevents a child entity from acquiring contradictory ownership or publishing outside the tenant's SCM scope. Moving an entity elsewhere is treated as an administrative migration rather than an ordinary golden-path option. |
 | Encode lifecycle changes as small files | System activation, Component environment activation and release selection, and Resource provisioning are easier to review when each has one narrow file. ApplicationSets discover activation files directly; optional Component release files are merged into the already active Component Application. The paths remain a versioned, tested contract. |
 | Keep release overlays artifact-only | A release file answers one question: which versioned artifact should run in this environment. Runtime configuration remains in common and environment values, so promotion cannot unexpectedly alter replicas, Routes, health checks, or Secret references. Rollback selects an older release without reverting unrelated configuration. |
 | Compose existing Backstage action modules | GitHub actions handle repository operations, while RoadieHQ utility actions perform declarative contract transformations. This keeps the golden paths on maintained integrations and avoids project-specific action code with its own security and upgrade lifecycle. Organization administration and Git tag creation stay outside the templates because they require different privileges and are not safely covered by the available action set. |
@@ -59,8 +59,8 @@ Resources represent managed dependencies. Catalog relationships are intentionall
 while generated `api-dependencies.yaml` records a Component's reviewable contract versions.
 
 Every entity-producing repository stores its primary descriptor at `/catalog-info.yaml`. Golden
-paths immediately register that file, while the organization-wide GitHub provider independently
-discovers the same root convention for broad discovery and recovery.
+paths immediately register that file, while the App-scoped GitHub provider independently discovers
+the same root convention across installed organizations for broad discovery and recovery.
 
 The API, Component, and Resource nodes are peers under a System. Their provider and consumer
 relationships are catalog metadata, not another containment level.
@@ -123,6 +123,11 @@ directly:
 | Leaf | Entity-specific values and the corresponding trusted chart | Tekton, registry, workload, and managed-Resource objects on OpenShift |
 
 No chart writes back to Git.
+
+Domain and System repositories are inputs to Git-backed ApplicationSet generators. Their golden
+paths therefore add push webhooks to both the Argo CD server and ApplicationSet controller using
+the endpoints inherited from the PlatformTarget. Polling remains the fallback. API and Component
+Tekton webhooks remain separate, and leaf source repositories do not receive these GitOps hooks.
 
 ## Git discovery contracts
 
@@ -211,6 +216,10 @@ Each selected API gets its own namespace-qualified local contract filename and
 routes when operation IDs are available; contracts without operation IDs still receive download,
 host, catalog, and developer-documentation wiring.
 
+Camel implementation skeletons use `missingOperation("mock")` (or the YAML DSL equivalent), so
+unimplemented OpenAPI operations return Camel's contract-shaped mock behavior while development is
+in progress.
+
 ## Component build, release, and promotion
 
 The default and recommended implementation is **Quarkus Camel OpenAPI with Java DSL**. The
@@ -257,10 +266,16 @@ available.
 
 ## Repository ownership and SCM separation
 
-| Repository class | Maintainers | Contributors | Viewers |
-| --- | ---: | ---: | ---: |
-| Domain and System GitOps | Write | No access by default | Read |
-| API, Component, and Resource | Write | Write | Read |
+| Fixed GitHub team | Repository permission |
+| --- | --- |
+| `domain-maintainers` | `maintain` |
+| `domain-contributors` | `push` |
+| `domain-viewers` | `pull` |
+
+All generated repositories use these teams. The organization and teams must exist and the CF-IDP
+GitHub App must be installed before onboarding. The templates never create teams. Domains within
+one organization share the same role populations; separate organizations are the current tenancy
+boundary for independent populations.
 
 Generated entities use canonical annotations:
 
@@ -291,10 +306,11 @@ the target supplies the platform repository, chart, router, and Schema Registry 
 
 ## Security and trust model
 
-- **Public repository defaults:** All generated tenant repositories are public and their default
-  branches are unprotected. Team grants establish write responsibility but do not restrict read
-  access. Tekton receives no tenant Git credential, so private API and Component source requires a
-  credential-distribution design.
+- **Public repository defaults:** All generated tenant repositories are public. The default branch
+  requires pull-request changes, blocks force-push and deletion, and enforces protection for
+  administrators, without required approvals or status checks yet. Team grants establish write
+  responsibility but do not restrict read access. Tekton receives no tenant Git credential, so
+  private API and Component source requires a credential-distribution design.
 - **Reviewed cluster admission:** Backstage does not receive cluster credentials. It opens an
   append-only platform pull request and Argo CD reconciles it after review and merge.
 - **Unsigned lab webhooks:** EventListener signature verification is not yet implemented. Treat

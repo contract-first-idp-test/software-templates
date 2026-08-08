@@ -75,7 +75,7 @@ function profileValues(overrides = {}) {
     componentName: 'registry-verification',
     implementationProfile: 'spring-boot-openapi',
     description: 'Hermetic Apicurio Registry verification',
-    owner: 'group:default/cf-idp-integration-tests-contributors',
+    owner: 'group:default/domain-maintainers',
     system_ref: 'system:cf-idp-integration-tests/storefront',
     system_name: 'storefront',
     git_org: 'contract-first-idp',

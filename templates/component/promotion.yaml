@@ -7,7 +7,7 @@ metadata:
   annotations: {backstage-gitea.io/github-compatible: 'true'}
   tags: [contract-first, promotion, component]
 spec:
-  owner: group:default/platform-engineering
+  owner: group:default/platform-maintainers
   type: service
   parameters:
     - title: Promotion

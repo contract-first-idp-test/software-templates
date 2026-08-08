@@ -7,7 +7,7 @@ metadata:
   annotations: {backstage-gitea.io/github-compatible: 'true'}
   tags: [contract-first, gitops, system]
 spec:
-  owner: group:default/platform-engineering
+  owner: group:default/platform-maintainers
   type: system
   parameters:
     - title: System
@@ -31,6 +31,13 @@ spec:
         entityRef: ${{ parameters.domainRef }}
         defaultKind: Domain
         defaultNamespace: default
+    - id: fetchTarget
+      name: Fetch platform target
+      action: catalog:fetch
+      input:
+        entityRef: ${{ steps.fetchDomain.output.entity.spec.platformTarget }}
+        defaultKind: Resource
+        defaultNamespace: default
     - id: renderBase
       name: Render System repository
       action: fetch:template
@@ -40,7 +47,7 @@ spec:
         values:
           systemName: ${{ parameters.systemName }}
           description: ${{ parameters.description }}
-          owner: group:default/${{ steps.fetchDomain.output.entity.metadata.name }}-maintainers
+          owner: group:default/domain-maintainers
           domainRef: ${{ parameters.domainRef }}
           groupId: ${{ steps.fetchDomain.output.entity.spec.groupId }}.${{ parameters.systemName | replace('-', '') }}
           scmProvider: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-provider'] or 'github' }}
@@ -69,10 +76,33 @@ spec:
         description: GitOps repository for System ${{ parameters.systemName }}
         defaultBranch: main
         repoVisibility: public
-        protectDefaultBranch: false
+        protectDefaultBranch: true
+        requiredApprovingReviewCount: 0
+        protectEnforceAdmins: true
         collaborators:
-          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-maintainers', access: push}
-          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-viewers', access: pull}
+          - {team: domain-maintainers, access: maintain}
+          - {team: domain-contributors, access: push}
+          - {team: domain-viewers, access: pull}
+    - id: applicationWebhook
+      name: Notify Argo CD on System changes
+      action: github:webhook
+      input:
+        repoUrl: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-host'] }}?owner=${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-org'] }}&repo=${{ parameters.systemName }}-system
+        webhookUrl: ${{ steps.fetchTarget.output.entity.spec.platform.argocd.webhooks.application }}
+        events: [push]
+        active: true
+        contentType: json
+        insecureSsl: false
+    - id: applicationSetWebhook
+      name: Notify ApplicationSet on System changes
+      action: github:webhook
+      input:
+        repoUrl: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-host'] }}?owner=${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-org'] }}&repo=${{ parameters.systemName }}-system
+        webhookUrl: ${{ steps.fetchTarget.output.entity.spec.platform.argocd.webhooks.applicationSet }}
+        events: [push]
+        active: true
+        contentType: json
+        insecureSsl: false
     - id: register
       name: Register System immediately
       action: catalog:register

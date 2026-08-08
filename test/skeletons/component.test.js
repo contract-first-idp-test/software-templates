@@ -91,6 +91,8 @@ describe('Component implementation profiles', () => {
         'direct:cf-idp-integration-tests-wiring-only.',
       );
       if (profile !== 'spring-boot-openapi') {
+        expect(generated).toMatch(/missingOperation\(["']mock["']\)|missingOperation:\s*mock/);
+        expect(generated).not.toMatch(/missingOperation\(["']ignore["']\)|missingOperation:\s*ignore/);
         expect(generated).toContain(
           'direct:cf-idp-integration-tests-details.getProduct',
         );

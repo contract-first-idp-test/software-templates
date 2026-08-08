@@ -12,7 +12,7 @@ test('Resource skeleton renders PostgreSQL catalog and desired-state values', as
     resourceName: 'orders-db',
     systemName: 'orders',
     systemRef: 'system:retail/orders',
-    owner: 'group:default/retail-contributors',
+    owner: 'group:default/domain-maintainers',
     scmProvider: 'github',
     scmHost: 'tenant.example',
     domainOrg: 'retail-team',

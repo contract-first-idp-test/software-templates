@@ -101,9 +101,9 @@ change patterns—not merely different directories.
 | --- | --- | --- | --- |
 | Domain | Gives the tenant one authoritative portable lifecycle | Catalog entity, target reference, environment policy, and System activations | Domain maintainers |
 | System | Protects shared application desired state from routine source changes | Catalog entity and desired state for APIs, Components, releases, and Resources | Domain maintainers |
-| API | Lets a contract be designed, released, and consumed independently of any implementation | One self-contained OpenAPI contract and its Maven publication project | Maintainers and contributors |
-| Component | Gives an implementation its own build history, dependencies, and developer workflow | Source, API selections, Devfile, and Maven wrapper | Maintainers and contributors |
-| Resource | Provides a stable catalog and documentation identity even when its platform implementation changes | Resource entity and implementation-facing documentation | Maintainers and contributors |
+| API | Lets a contract be designed, released, and consumed independently of any implementation | One self-contained OpenAPI contract and its Maven publication project | Domain maintainers |
+| Component | Gives an implementation its own build history, dependencies, and developer workflow | Source, API selections, Devfile, and Maven wrapper | Domain maintainers |
+| Resource | Provides a stable catalog and documentation identity even when its platform implementation changes | Resource entity and implementation-facing documentation | Domain maintainers |
 
 Child golden paths derive ownership and repository location from the parent Domain. They do not ask
 for an independent owner or SCM destination. That constraint prevents child entities from silently
@@ -133,11 +133,12 @@ promotes a release.
 
 ## Backstage integration
 
-Developer Hub's GitHub provider discovers `/catalog-info.yaml` across its configured organization,
+Developer Hub's App-scoped GitHub provider discovers `/catalog-info.yaml` across repositories
+visible through the CF-IDP GitHub App installations,
 including this repository's Location. Each Domain, System, API, Component, and Resource golden path
 also immediately registers the generated repository-root `catalog-info.yaml` after publication.
 Provider discovery supplies broad discovery and recovery; Scaffolder registration supplies prompt
-task feedback and works when the generated repository is outside the provider organization.
+task feedback.
 
 Test data lives only under `test/fixtures/` and is never registered by the production catalog.
 Generated GitOps entrypoints use the released chart structure explicitly:
@@ -156,8 +157,10 @@ The following action IDs must be available to the Backstage scaffolder:
 | Configure webhooks | `github:webhook` |
 | Troubleshoot template execution | `debug:log` |
 
-GitHub is the primary SCM: configure Backstage's GitHub integration for repository publication,
-pull requests, team access, webhooks, and root catalog discovery. Register a typed platform target
+GitHub is the primary SCM: configure Backstage's GitHub App integration for repository publication,
+pull requests, team access, webhooks, branch protection, and root catalog discovery. Every target
+organization must already contain `domain-maintainers`, `domain-contributors`, and `domain-viewers`
+and have the App installed. Register a typed platform target
 Resource before running
 the Domain golden path. No project-specific scaffolder action is required. Install
 `@backstage/plugin-scaffolder-backend-module-github` and
@@ -183,9 +186,10 @@ make test
 
 ## Current limitations
 
-- All generated tenant repositories are public by default, and default-branch protection is
-  disabled. API and Component source must remain readable anonymously for the current Tekton clone
-  path.
+- All generated tenant repositories are public by default. Their `main` branch is protected,
+  including administrators, with pull requests required but no approving-review or status-check
+  minimum yet. API and Component source must remain readable anonymously for the current Tekton
+  clone path.
 - Multi-cluster environment placement is reserved but not implemented; every environment currently
   uses the Domain's selected target.
 - Webhook signature verification is reserved but not implemented for the lab EventListeners.

@@ -16,7 +16,7 @@ test('System skeleton renders its catalog identity and group', async () => {
         description: 'Order management',
         domainRef: 'domain:retail/retail',
         groupId: 'com.example.orders',
-        owner: 'group:default/retail-maintainers',
+        owner: 'group:default/domain-maintainers',
         scmProvider: 'github',
         scmHost: 'tenant.example',
         domainOrg: 'retail-team',

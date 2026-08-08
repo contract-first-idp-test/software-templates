@@ -181,7 +181,7 @@ try {
     domainName: 'retail',
     systemName: systemDeclaration.systemName,
     groupId: systemDeclaration.groupId,
-    owner: 'group:default/retail-maintainers',
+    owner: 'group:default/domain-maintainers',
     systemRepository: {
       url: systemDeclaration.repository.cloneUrl,
       revision: systemDeclaration.repository.revision,

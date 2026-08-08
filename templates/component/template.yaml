@@ -8,7 +8,7 @@ metadata:
     backstage-gitea.io/github-compatible: 'true'
   tags: [contract-first, api, component, tekton]
 spec:
-  owner: group:default/platform-engineering
+  owner: group:default/platform-maintainers
   type: service
   parameters:
     - title: Component
@@ -236,7 +236,7 @@ spec:
           componentName: ${{ parameters.componentName }}
           implementationProfile: ${{ parameters.implementationProfile }}
           description: ${{ parameters.description }}
-          owner: group:default/${{ steps.fetchDomain.output.entity.metadata.name }}-contributors
+          owner: group:default/domain-maintainers
           system_ref: ${{ parameters.systemRef }}
           system_name: ${{ steps.fetchSystem.output.entity.metadata.name }}
           git_org: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-org'] }}
@@ -256,7 +256,7 @@ spec:
         values:
           componentName: ${{ parameters.componentName }}
           description: ${{ parameters.description }}
-          owner: group:default/${{ steps.fetchDomain.output.entity.metadata.name }}-contributors
+          owner: group:default/domain-maintainers
           systemRef: ${{ parameters.systemRef }}
           implementationProfile: ${{ parameters.implementationProfile }}
           implementsApi: ${{ parameters.implementsApi }}
@@ -303,11 +303,13 @@ spec:
         description: ${{ parameters.description }}
         defaultBranch: main
         repoVisibility: public
-        protectDefaultBranch: false
+        protectDefaultBranch: true
+        requiredApprovingReviewCount: 0
+        protectEnforceAdmins: true
         collaborators:
-          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-maintainers', access: push}
-          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-contributors', access: push}
-          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-viewers', access: pull}
+          - {team: domain-maintainers, access: maintain}
+          - {team: domain-contributors, access: push}
+          - {team: domain-viewers, access: pull}
     - id: register
       name: Register Component
       action: catalog:register

@@ -16,7 +16,7 @@ test('API skeleton renders valid XML and catalog YAML', async () => {
       registryGroupId: 'com.example.orders',
       registryArtifactId: 'orders',
       schemaRegistryApiUrl: 'https://registry.example/apis/registry/v3',
-      owner: 'group:default/retail-contributors',
+      owner: 'group:default/domain-maintainers',
       systemRef: 'system:retail/orders',
       scmProvider: 'github',
       scmHost: 'tenant.example',

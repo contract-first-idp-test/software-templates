@@ -6,6 +6,6 @@ metadata:
   title: '[TEST] Storefront Consumer System'
   description: Consumer System used only by cross-System Component integration tests.
 spec:
-  owner: group:default/cf-idp-integration-tests-maintainers
+  owner: group:default/domain-maintainers
   domain: domain:cf-idp-integration-tests/cf-idp-integration-tests
   groupId: io.github.cfidp.storefront

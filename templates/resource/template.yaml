@@ -7,7 +7,7 @@ metadata:
   annotations: {backstage-gitea.io/github-compatible: 'true'}
   tags: [contract-first, resource]
 spec:
-  owner: group:default/platform-engineering
+  owner: group:default/platform-maintainers
   type: resource
   parameters:
     - title: Resource
@@ -62,7 +62,7 @@ spec:
           profile: ${{ parameters.profile }}
           resourceName: ${{ parameters.resourceName }}
           description: PostgreSQL database for ${{ steps.fetchSystem.output.entity.metadata.name }}
-          owner: group:default/${{ steps.fetchDomain.output.entity.metadata.name }}-contributors
+          owner: group:default/domain-maintainers
           systemRef: ${{ parameters.systemRef }}
           systemName: ${{ steps.fetchSystem.output.entity.metadata.name }}
     - id: renderProfileRepository
@@ -75,7 +75,7 @@ spec:
           resourceName: ${{ parameters.resourceName }}
           profile: ${{ parameters.profile }}
           systemRef: ${{ parameters.systemRef }}
-          owner: group:default/${{ steps.fetchDomain.output.entity.metadata.name }}-contributors
+          owner: group:default/domain-maintainers
           systemName: ${{ steps.fetchSystem.output.entity.metadata.name }}
           scmProvider: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-provider'] or 'github' }}
           scmHost: ${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-host'] }}
@@ -121,11 +121,13 @@ spec:
         description: ${{ parameters.profile }} Resource ${{ parameters.resourceName }} for System ${{ steps.fetchSystem.output.entity.metadata.name }}
         defaultBranch: main
         repoVisibility: public
-        protectDefaultBranch: false
+        protectDefaultBranch: true
+        requiredApprovingReviewCount: 0
+        protectEnforceAdmins: true
         collaborators:
-          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-maintainers', access: push}
-          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-contributors', access: push}
-          - {team: '${{ steps.fetchDomain.output.entity.metadata.name }}-viewers', access: pull}
+          - {team: domain-maintainers, access: maintain}
+          - {team: domain-contributors, access: push}
+          - {team: domain-viewers, access: pull}
     - id: register
       name: Register Resource immediately
       action: catalog:register

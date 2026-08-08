@@ -11,7 +11,7 @@ metadata:
 spec:
   type: openapi
   lifecycle: production
-  owner: group:default/cf-idp-integration-tests-contributors
+  owner: group:default/domain-maintainers
   system: system:payments/payments
   definition:
     $text: ./contracts/authorization.yaml

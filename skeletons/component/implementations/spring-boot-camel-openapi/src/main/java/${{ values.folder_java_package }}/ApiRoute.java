@@ -22,7 +22,7 @@ public class ApiRoute extends RouteBuilder {
                 .apiContextPath("/api-docs");
 
         {% if values.provided_api %}
-        rest().openApi().specification("${{ values.provided_api.contract_file }}").missingOperation("ignore");
+        rest().openApi().specification("${{ values.provided_api.contract_file }}").missingOperation("mock");
         {% endif %}
 
         {% for consumed_api in values.consumed_apis %}
