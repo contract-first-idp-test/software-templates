@@ -1,26 +1,26 @@
 # ${{ values.resourceName }}
 
-This repository represents the `${{ values.resourceName }}` `${{ values.profile }}` Resource in
-the `${{ values.systemName }}` System.
+This repository represents the `${{ values.resourceName }}` Resource in the
+`${{ values.systemName }}` System. It uses the `${{ values.profile }}` implementation profile and
+owns the Resource catalog identity and Resource-specific operational documentation.
 
-## After creation
+## After Creation
 
 1. Review and merge the Resource pull request in the parent System repository.
 2. Wait for the Resource Application and operator-managed resource to become healthy.
-3. Follow the profile documentation to locate connection information and credentials.
+3. Read [Resource operations](docs/index.md) for the generated object names, connection data, and
+   credential discovery commands.
 
-## Ownership model
+## Configuration and Ownership
 
-| Concern | Source of truth |
+| Concern | Owner and location |
 | --- | --- |
-| Resource identity and documentation | This repository |
-| Common deployment intent | Parent System desired-state repository |
-| Environment activation and overrides | Parent System desired-state repository |
-| Platform implementation | Trusted developer chart selected by the profile |
+| Resource identity and operations | This repository: `catalog-info.yaml` and `docs/index.md` |
+| Common configuration | Parent System: `resources/${{ values.profile }}/${{ values.resourceName }}/values.yaml` |
+| Environment configuration and provisioning | Parent System: `resources/${{ values.profile }}/${{ values.resourceName }}/environments/<environment>.yaml` |
+| Physical implementation | Platform-owned chart selected by the `${{ values.profile }}` profile |
 
-In a generated Resource repository, `docs/index.md` describes the Resource contract, connection
-details, and ownership guidance.
-
-This repository gives the Resource a stable identity and implementation extension point. The
-profile documentation describes the current platform implementation and how a future
-platform-supported profile could replace it.
+The platform owns the implementation chart and operator integration. The application team owns the
+reviewed common and environment values in the System repository. Do not store connection
+credentials in Git; discover the operator-managed Secret using the commands and naming contract in
+[Resource operations](docs/index.md).

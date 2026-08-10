@@ -1,28 +1,53 @@
 # ${{ values.api_id }} API
 
-This repository owns one complete OpenAPI contract in `specification.yaml`. Git is the
-authoritative contract source; the Schema Registry contains validated, immutable publications of
-Git revisions.
+This repository owns the complete OpenAPI contract in `specification.yaml`. Git is authoritative;
+the Schema Registry contains validated, immutable publications of Git revisions.
 
-## After creation
+## After Creation
 
 1. Review and merge the API pull request in the parent System repository.
 2. Wait for the API Application and initial publication PipelineRun to succeed.
 3. Verify the commit-SHA version in the Schema Registry before selecting this API in a Component.
 
-## Contract contents
+An API is consumable only after its initial publication succeeds. Components do not fall back to
+Git or catalog content when the selected Registry artifact is absent.
 
-The repository was created from either:
+## Release
 
-- an uploaded, self-contained OpenAPI YAML or JSON document; or
-- the golden path's minimal OpenAPI 3.1 scaffold.
+The publication lifecycle is:
 
-The golden path preserves uploaded contract content exactly. Spectral validates structure,
-metadata, operation identifiers, and platform governance before Registry publication. Internal
-`#/...` references are supported. Relative references to files outside the uploaded document are
-not.
+```text
+commit on main
+    -> immutable commit-SHA Registry publication
 
-## Publication coordinates
+push vX.Y.Z tag
+    -> immutable human Registry release vX.Y.Z
+```
+
+To create a stable API version that Components can select, tag the intended commit and push the
+tag:
+
+```bash
+git tag -a v2.1.3 <commit> -m "Release v2.1.3"
+git push origin v2.1.3
+```
+
+Release tags use `v<major>[.<minor>[.<patch>]][-<prerelease>]`. Tekton resolves the tagged commit,
+publishes or finds its SHA version, and creates the distinct immutable Registry version such as
+`v2.1.3`. Changing OpenAPI `info.version` updates contract metadata; it does not create a Registry
+release.
+
+## Contract
+
+The repository was created from either an uploaded, self-contained OpenAPI YAML or JSON document,
+or the golden path's minimal OpenAPI 3.1 scaffold. The golden path preserves uploaded content.
+Spectral validates structure, metadata, operation identifiers, and platform governance before
+publication.
+
+Internal `#/...` references are supported. Relative references to files outside
+`specification.yaml` are not.
+
+## Registry Coordinates
 
 | Coordinate | Value |
 | --- | --- |
@@ -30,27 +55,22 @@ not.
 | Registry artifact | `${{ values.api_id }}` |
 | Registry API | `${{ values.schemaRegistryApiUrl }}` |
 
-The Maven POM configures the official Apicurio Registry Maven plugin. The System-owned Pipeline
-validates the initial revision and every later main push, then publishes a Registry version named
-with the exact Git commit SHA.
+The Maven POM uses the official Apicurio Registry Maven plugin. The System-owned Pipeline validates
+the initial revision and every later main push, then publishes a version named with the exact Git
+commit SHA.
 
-An API becomes consumable only after initial publication succeeds. Generated Components do not
-fall back to Git or catalog content when the selected Registry artifact is absent.
+## Version Selection
 
-## Create a human release
+| Selection | Behavior |
+| --- | --- |
+| `latest` | Follows the latest available Registry publication |
+| Human release such as `v2.1.3` | Selects one immutable named release |
+| Exact 40-character Git SHA | Selects one immutable commit publication |
 
-Push a tag using `v<major>[.<minor>[.<patch>]][-<prerelease>]`, for example:
+Prefer a human release or exact SHA for repeatable Component builds. Use `latest` only when a
+floating contract is intentional.
 
-```bash
-git tag -a v2.1.3 <commit> -m "Release v2.1.3"
-git push origin v2.1.3
-```
-
-Tekton resolves the tagged commit, publishes or finds its SHA version, then creates the distinct
-immutable Registry version `v2.1.3`. OpenAPI `info.version` remains contract metadata; it does not
-declare the Registry release.
-
-## Publish locally
+## Local Publication
 
 Supply an explicit version and collision policy:
 
@@ -60,17 +80,4 @@ mvn io.apicurio:apicurio-registry-maven-plugin:3.2.5:register \
   -Dregistry.ifExists=FIND_OR_CREATE_VERSION
 ```
 
-Publication uses the Maven plugin directly. The repository contains no custom Registry client or
-downloaded CLI.
-
-## Version-selection guidance
-
-Generated Components can use:
-
-| Selection | Behavior |
-| --- | --- |
-| `latest` | Follow the latest available Registry publication |
-| Human release tag | Retrieve one immutable named release |
-| Exact 40-character Git SHA | Retrieve one immutable commit publication |
-
-Prefer immutable selections for repeatable builds.
+The repository contains no custom Registry client or downloaded CLI.

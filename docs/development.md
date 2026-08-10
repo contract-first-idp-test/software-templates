@@ -1,5 +1,7 @@
 # Development and testing
 
+[Back to the repository overview](../README.md)
+
 Use this guide when changing a Backstage template, generated skeleton, or template-to-chart
 contract.
 
@@ -10,6 +12,31 @@ contract.
   testing
 - Maven repository access only when compiling generated Java baselines
 - A Backstage instance only for opt-in smoke tests
+
+## Backstage runtime requirements
+
+The template catalog expects these Scaffolder actions:
+
+| Capability | Action IDs |
+| --- | --- |
+| Read catalog and files | `catalog:fetch`, `fetch:plain:file` |
+| Render content | `fetch:template` |
+| Parse, transform, and write contracts | `roadiehq:utils:fs:parse`, `roadiehq:utils:fs:write`, `roadiehq:utils:jsonata`, `roadiehq:utils:serialize:yaml` |
+| Publish repositories and pull requests | `publish:github`, `publish:github:pull-request` |
+| Register entities | `catalog:register` |
+| Configure webhooks | `github:webhook` |
+| Troubleshoot execution | `debug:log` |
+
+Install the Backstage catalog, fetch, and GitHub Scaffolder modules that provide those actions,
+plus `@roadiehq/scaffolder-backend-module-utils`. RHDH 1.10 uses the compatible dynamic-plugin
+overlay `roadiehq-scaffolder-backend-module-utils:bs_1.49.4__4.1.2`; verify the four
+`roadiehq:utils:*` actions in the installed action list before running a template.
+
+GitHub publication, pull requests, team grants, webhooks, branch protection, and catalog discovery
+use the CF-IDP GitHub App. Each target organization must already contain `domain-maintainers`,
+`domain-contributors`, and `domain-viewers`, and the App must be installed with access to generated
+repositories. A Gitea compatibility plugin may supply the GitHub-compatible actions used by the
+checked-in lab configuration.
 
 ## Fast feedback
 
@@ -34,6 +61,9 @@ The default command runs only repository-local Jest suites:
 | Repository contracts | `npm run --prefix test test:contracts` | Registered templates, metadata, actions, and file contracts |
 | Skeleton rendering | `npm run --prefix test test:skeletons` | Representative generated repositories and profile-specific output |
 | Coordinated compatibility | `npm run --prefix test test:compatibility` | Root target, generated values, consumers, schemas, and canonical chart paths |
+
+Bookinfo and cross-System scenarios under `test/fixtures/` are test data only; production catalog
+metadata must not register the fixture tree.
 
 `make test` does not require sibling repositories, a live Backstage instance, cluster, or Schema
 Registry. GitHub Actions currently runs this repository-local command only.

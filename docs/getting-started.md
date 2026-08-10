@@ -1,5 +1,7 @@
 # Bootstrap a tenant
 
+[Back to the repository overview](../README.md)
+
 The platform team first registers one or more Backstage `Resource` entities whose `spec.type` is
 `contract-first-idp-target`. Each authoritative target publishes its runtime configuration under
 `spec.platform`, including the mutable configuration repository and branch, tenant-admission path,

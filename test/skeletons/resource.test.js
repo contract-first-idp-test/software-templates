@@ -28,6 +28,11 @@ test('Resource skeleton renders PostgreSQL catalog and desired-state values', as
   };
   try {
     await renderDirectory({
+      source: path.join(root, 'skeletons/resource/base'),
+      destination: path.join(destination, 'base-repository'),
+      values,
+    });
+    await renderDirectory({
       source: path.join(root,
         'skeletons/resource/implementations/postgresql/resource-repo'),
       destination: path.join(destination, 'repository'),
@@ -42,6 +47,11 @@ test('Resource skeleton renders PostgreSQL catalog and desired-state values', as
     expect(YAML.parse(await fs.readFile(
       path.join(destination, 'repository/catalog-info.yaml'), 'utf8')).spec.database)
       .toMatchObject({postgresVersion: 16, databaseName: 'orders', userName: 'orders_owner'});
+    const readme = await fs.readFile(path.join(destination, 'base-repository/README.md'), 'utf8');
+    expect(readme).not.toContain('${{');
+    expect(readme).toContain('(docs/index.md)');
+    await expect(fs.access(path.join(destination, 'repository/docs/index.md')))
+      .resolves.toBeUndefined();
     expect(YAML.parse(await fs.readFile(
       path.join(destination, 'desired-state/values.yaml'), 'utf8')))
       .toMatchObject({

@@ -1,14 +1,20 @@
 # ${{ values.title }}
 
-`${{ values.domainName }}` is a portable Contract-First IDP tenant Domain owned by
-`group:default/domain-maintainers`. It contains tenant identity and lifecycle
-policy, while `${{ values.platformTarget }}` supplies trusted cluster configuration.
+`${{ values.domainName }}` is the tenant Domain owned by
+`group:default/domain-maintainers`. This repository owns the Domain's catalog identity, ordered
+environment lifecycle, build-environment designation, and System activation files.
 
-The scaffolder publishes this repository, registers `catalog-info.yaml`, and opens a separate
-platform admission pull request. After that pull request merges, Argo CD renders the Domain chart
-once and creates one System discovery controller for each ordered environment.
+The Domain is attached to `${{ values.platformTarget }}`. That platform target supplies trusted
+cluster, router, Schema Registry, Quay, Argo CD, chart, SCC, and cluster-local Secret coordinates;
+they do not belong in this repository.
 
-## Environment lifecycle
+## After Creation
+
+The golden path publishes this repository, registers `catalog-info.yaml`, and opens a platform
+admission pull request. After that pull request merges, Argo CD attaches the Domain to the target,
+renders the Domain chart, and creates System discovery controllers for the ordered environments.
+
+## Environments
 
 `${{ values.buildEnvironment }}` is the build environment and must remain first.
 
@@ -18,18 +24,31 @@ once and creates one System discovery controller for each ordered environment.
 | `${{ environment.name }}` | `${{ environment.namespaceSuffix | default("none", true) }}` |
 {% endfor %}
 
-The target owns router, Schema Registry, Quay, Argo CD, chart, SCC, and cluster-local Secret
-coordinates. This repository can therefore be attached to another compatible target without
-rewriting tenant policy.
+The target reference keeps tenant lifecycle policy separate from target-specific runtime
+configuration and permits attachment to another compatible target.
 
-## Git contract
+## System Activation
 
-| Path | Meaning |
+A System is active in an environment when this file exists:
+
+```text
+systems/<system>/environments/<environment>.yaml
+```
+
+The **System Golden Path** creates the build-environment activation. Use **Activate System
+Environment** in Developer Hub for later environments; it opens a pull request that adds the next
+activation file. Merging that pull request is the lifecycle operation that activates the System.
+
+This repository selects where a System is active. Component and API release workflows remain in
+their respective repositories and the System desired-state repository.
+
+## Repository Contract
+
+| Path | Responsibility |
 | --- | --- |
 | `catalog-info.yaml` | Domain identity, owner, target reference, group ID, and lifecycle policy |
 | `systems/<system>/environments/<environment>.yaml` | Activate one System in one environment |
 
-Every generated repository is public by default and protects `main` for pull-request changes,
+The generated repository is public by default and protects `main` for pull-request changes,
 force-push prevention, deletion prevention, and administrator enforcement. The GitHub organization
-must already have the CF-IDP GitHub App installed and contain the `domain-maintainers`,
-`domain-contributors`, and `domain-viewers` teams.
+must already contain the standard Domain teams and have the CF-IDP GitHub App installed.

@@ -5,23 +5,56 @@ ${{ values.description }}
 | Attribute | Value |
 | --- | --- |
 | System | `${{ values.systemRef }}` |
-| Implementation | `${{ values.implementationProfile }}` |
-| Build | Tekton/OpenShift Pipelines |
+| Implementation profile | `${{ values.implementationProfile }}` |
+| Build service | Tekton/OpenShift Pipelines |
 | Schema Registry API | `${{ values.schemaRegistryApiUrl }}` |
 
-This repository owns implementation source and developer tooling. Runtime and build intent live
-under this Component in the parent System desired-state repository. Tekton clones this public
-repository without a Git write credential.
+This repository owns implementation source and developer tooling. Runtime and build desired state
+live under this Component in the parent System repository. Tekton clones this public repository
+without a Git write credential.
 
-## After creation
+## After Creation
 
 1. Review and merge the Component pull request in the parent System repository.
 2. Wait for the Component environment, runtime, and initial build to become healthy.
-3. Confirm that the `git-<full-commit-sha>` image exists before creating a human release tag.
+3. Confirm that the `git-<full-commit-sha>` image exists before creating a human release.
 
-## Work locally
+## Release and Promotion
 
-Use the checked-in Maven wrapper so local and pipeline builds use the same project configuration:
+```text
+push to main
+    -> build git-<full-sha>
+
+push vX.Y.Z tag
+    -> attach the human release tag to the existing image digest
+
+Promote Component in Developer Hub
+    -> update the desired release in the next environment
+```
+
+Create a release by tagging a commit that has already built successfully:
+
+```bash
+git tag -a v1.7.3 <commit> -m "Release v1.7.3"
+git push origin v1.7.3
+```
+
+Creating the Git tag does not rebuild the Component. Release materialization resolves the
+commit's existing `git-<full-sha>` image and adds the human tag to that digest. It is asynchronous;
+wait for the tag to appear in Quay.
+
+Creating a release does not promote an environment. After materialization succeeds, run
+**Promote Component** in Developer Hub. That workflow opens a pull request to update
+`components/${{ values.componentName }}/releases/<environment>.yaml` in the parent System
+repository. Merging it selects the release for the next environment and starts target-local image
+promotion. To roll back, select an older release through the same workflow.
+
+The current build-environment materialization task does not prevent an existing human tag from
+being moved. Enforce tag immutability in Quay or through release policy.
+
+## Local Development
+
+Use the checked-in Maven wrapper so local and pipeline builds share project configuration:
 
 ```bash
 ./mvnw test
@@ -31,39 +64,34 @@ Use the checked-in Maven wrapper so local and pipeline builds use the same proje
 
 The `.devfile.yaml` provides the corresponding editor and workspace entrypoint.
 
-## Build and release
+## Runtime Configuration
 
-Main commits publish `git-<full-commit-sha>` and update the build environment's floating `latest`.
-A human Git tag creates a release tag on that already-built digest:
+Runtime configuration is owned in the parent System repository:
 
-```bash
-git tag -a v1.7.3 <commit> -m "Release v1.7.3"
-git push origin v1.7.3
-```
+| Path | Purpose |
+| --- | --- |
+| `components/${{ values.componentName }}/values.yaml` | Build and shared Component intent |
+| `components/${{ values.componentName }}/environments/<environment>.yaml` | Replicas, Route, health checks, resources, environment variables, and Secrets |
+| `components/${{ values.componentName }}/releases/<environment>.yaml` | Selected image tag only |
 
-Release materialization is asynchronous and does not promote an environment. After the Quay tag is
-available, use **Promote Component** in Backstage. The current materialization task does not guard
-against moving an existing human tag; enforce immutability through Quay or release policy. Rollback
-promotes an older release through the same workflow.
+Keep runtime configuration out of release files so promotion and rollback change only the
+artifact selection.
 
-Runtime replicas, resources, Secrets, health checks, and Route configuration belong in System
-common or environment values, never in release overlays.
+## API Dependencies
 
-## API contracts
-
-Maven downloads selected contracts from the enterprise Apicurio Registry during `initialize` and
-writes them under `target/generated-resources/openapi`. Reviewable selections live in
+Maven downloads selected contracts from the Schema Registry during `initialize` and writes them
+under `target/generated-resources/openapi`. Reviewable selections live in
 `api-dependencies.yaml`.
 
 | Selection | Build behavior |
 | --- | --- |
-| `latest` | Follow the latest available Apicurio publication |
-| Human release tag | Download the matching immutable Registry version |
-| Exact Git SHA | Download the matching immutable commit publication |
+| `latest` | Follows the latest available Registry publication |
+| Human release tag | Downloads the matching immutable Registry version |
+| Exact Git SHA | Downloads the matching immutable commit publication |
 
 `latest` can change a generated model without a Component source change. Prefer a release or SHA
-for repeatable builds. A selected API must complete initial publication; missing Registry artifacts
-fail the build without falling back to Git or catalog content.
+for repeatable builds. Missing Registry artifacts fail the build without falling back to Git or
+catalog content.
 
 {% if values.provided_api %}
 ## Provided API
@@ -99,8 +127,7 @@ Generated operation entry points:
   `direct:${{ api.alias }}.${{ operation.operation_id }}`
 {% endfor %}
 {% else %}
-No operation-specific routes were generated. The contract and client host configuration are
-available; add a route using the contract's operation IDs when needed.
+No operation-specific routes were generated. Use the contract's operation IDs when adding routes.
 {% endif %}
 
 {% endfor %}

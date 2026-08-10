@@ -1,9 +1,11 @@
 # Architecture and Git contracts
 
+[Back to the repository overview](../README.md)
+
 Contract-First IDP separates developer intent from platform implementation. This document explains
 the responsibilities of Backstage, tenant repositories, Argo CD, and the runtime platform.
 
-## Why intent and implementation are separate
+## Intent and implementation separation
 
 The central design problem is how to give developers a short, safe path to production without
 making Backstage the owner of production or exposing every infrastructure decision in a form.

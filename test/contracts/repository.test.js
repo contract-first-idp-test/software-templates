@@ -44,6 +44,29 @@ describe('registered template contracts', () => {
   const catalog = YAML.parse(read('catalog-info.yaml'));
   const targets = catalog.spec.targets;
 
+  it('documents generated repository lifecycle operations', () => {
+    const readmePaths = ['api', 'component', 'domain', 'resource', 'system']
+      .map(kind => `skeletons/${kind}/base/README.md`);
+    for (const relative of readmePaths) expect(fs.existsSync(path.join(root, relative))).toBe(true);
+
+    const api = read('skeletons/api/base/README.md');
+    expect(api).toMatch(/^## Release$/m);
+    expect(api).toContain('git push origin v2.1.3');
+    expect(api).toContain('info.version');
+
+    const component = read('skeletons/component/base/README.md');
+    expect(component).toMatch(/^## Release and Promotion$/m);
+    expect(component).toContain('git-<full-sha>');
+    expect(component).toContain('Promote Component');
+    expect(component).toContain('releases/<environment>.yaml');
+
+    expect(read('skeletons/domain/base/README.md'))
+      .toContain('systems/<system>/environments/<environment>.yaml');
+    expect(read('skeletons/system/base/README.md'))
+      .toContain('components/<component>/releases/<environment>.yaml');
+    expect(read('skeletons/resource/base/README.md')).toContain('docs/index.md');
+  });
+
   it('keeps the private Node and Jest project entirely under test', () => {
     for (const obsolete of ['package.json', 'package-lock.json', 'jest.config.js', 'node_modules']) {
       expect(fs.existsSync(path.join(root, obsolete))).toBe(false);
