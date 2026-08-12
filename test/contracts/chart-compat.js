@@ -6,6 +6,7 @@ const nunjucks = require('nunjucks');
 const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
 const YAML = require('yaml');
+const semver = require('semver');
 const {repositoryRoot: root} = require('../helpers/paths');
 
 const charts = process.env.DEVELOPER_CHARTS_DIR || '../developer-charts';
@@ -71,11 +72,36 @@ const catalogSource = fs.readFileSync(
   path.join(root, 'skeletons/domain/base/catalog-info.yaml'), 'utf8');
 const tenantCatalog = YAML.parse(environment.renderString(catalogSource, {values}));
 const targetCatalog = YAML.parse(fs.readFileSync(targetPath, 'utf8'));
-const domainChartMetadata = YAML.parse(fs.readFileSync(
-  path.join(chartsRoot, 'charts/domain/environment/Chart.yaml'), 'utf8'));
+const softwareTemplatesRelease = YAML.parse(fs.readFileSync(
+  path.join(root, 'release.yaml'), 'utf8'));
+const developerChartsRelease = YAML.parse(fs.readFileSync(
+  path.join(chartsRoot, 'release.yaml'), 'utf8'));
 if (targetCatalog.spec.platform.dependencies.developerCharts.revision !==
-    `v${domainChartMetadata.version}`) {
-  throw new Error('Platform developer-charts revision does not match distributed chart versions');
+    `v${developerChartsRelease.version}` ||
+    targetCatalog.spec.platform.dependencies.developerCharts.version !==
+    developerChartsRelease.version) {
+  throw new Error('Platform developer-charts coordinate does not match the repository release');
+}
+if (!semver.satisfies(
+  targetCatalog.spec.platform.distribution.version,
+  softwareTemplatesRelease.requires.platformComponents,
+)) {
+  throw new Error('Current PlatformTarget does not satisfy software-templates platform requirement');
+}
+if (!semver.satisfies(
+  targetCatalog.spec.platform.dependencies.developerCharts.version,
+  softwareTemplatesRelease.requires.developerCharts,
+)) {
+  throw new Error('Current PlatformTarget does not satisfy software-templates chart requirement');
+}
+for (const coordinate of [
+  targetCatalog.spec.platform.distribution,
+  targetCatalog.spec.platform.dependencies.developerCharts,
+  targetCatalog.spec.platform.dependencies.softwareTemplates,
+]) {
+  if (coordinate.revision !== `v${coordinate.version}`) {
+    throw new Error('PlatformTarget release coordinates must use exact matching tags');
+  }
 }
 if (targetCatalog.spec.platform.dependencies.softwareTemplates.catalogPath !==
     'catalog-info.yaml') {

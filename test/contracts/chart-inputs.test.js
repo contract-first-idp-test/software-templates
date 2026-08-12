@@ -14,7 +14,8 @@ describe('template-to-chart inputs', () => {
       expect(templateSource).not.toContain('fetchTargetValues');
       expect(templateSource).not.toContain('parseTargetValues');
     }
-    expect(read('templates/domain/template.yaml')).not.toContain('roadiehq:');
+    expect(read('templates/domain/template.yaml'))
+      .toContain('roadiehq:utils:jsonata');
   });
 
   it('keeps tenant policy portable and target values trusted', () => {

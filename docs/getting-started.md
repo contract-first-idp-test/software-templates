@@ -5,7 +5,9 @@
 The platform team first registers one or more Backstage `Resource` entities whose `spec.type` is
 `contract-first-idp-target`. Each authoritative target publishes its runtime configuration under
 `spec.platform`, including the mutable configuration repository and branch, tenant-admission path,
-runtime endpoints, and immutable dependency versions. Templates consume the fetched entity directly.
+runtime endpoints, actual dependency versions, and immutable dependency revisions. Templates
+validate those versions against this release's `release.yaml` requirements before generating or
+publishing anything.
 
 Before running a golden path, verify that the target GitHub organization already exists, the
 CF-IDP GitHub App is installed in it, and the fixed `domain-maintainers`, `domain-contributors`, and

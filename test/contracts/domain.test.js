@@ -34,7 +34,10 @@ describe('portable Domain and admission contracts', () => {
     expect(template.spec.steps.filter(step => step.id === 'renderAdmission')).toHaveLength(1);
     expect(template.spec.steps.find(step => step.id === 'fetchTargetValues')).toBeUndefined();
     expect(template.spec.steps.find(step => step.id === 'parseTargetValues')).toBeUndefined();
-    expect(template.spec.steps.some(step => step.action?.startsWith('roadiehq:'))).toBe(false);
+    expect(template.spec.steps.filter(step => step.action?.startsWith('roadiehq:')))
+      .toEqual([expect.objectContaining({
+        id: 'validateCompatibility', action: 'roadiehq:utils:jsonata',
+      })]);
     expect(template.spec.steps.find(step => step.id === 'renderAdmission').input.targetPath)
       .toContain('spec.platform.tenantAdmission.path');
     expect(template.spec.steps.find(step => step.id === 'platformPr').action)

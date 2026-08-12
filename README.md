@@ -44,19 +44,18 @@ application moves through its lifecycle.
 
 To onboard a tenant, follow [Getting started](docs/getting-started.md).
 
-## Coordinated Release
+## Independent release
 
-The supported dependency set is:
+This software-templates release is independently versioned and requires:
 
 ```text
-platform-components: v1.0.0
-software-templates:  v1.0.0
-developer-charts:    v1.0.0
-contract generation: v1
+software-templates:  1.1.0 (exact discovery tag v1.1.0)
+platform-components: >=1.1.0 <2.0.0
+developer-charts:    >=1.0.0 <1.1.0
 ```
 
-Treat coordinated release tags as immutable. The platform target records the released template
-and chart revisions consumed by an installation.
+The PlatformTarget records exact immutable revisions and actual versions. Compatibility ranges do
+not make Argo CD follow floating minor lines. See [Release and compatibility](docs/release-versioning.md).
 
 ## Documentation
 
@@ -66,6 +65,8 @@ and chart revisions consumed by an installation.
   files, release workflows, and current constraints
 - [Development and testing](docs/development.md) — Backstage requirements, template changes, test
   suites, and coordinated validation
+- [Release and compatibility](docs/release-versioning.md) — independent SemVer ownership, ranges,
+  exact tags, and upgrade examples
 
 Generated repository READMEs under `skeletons/**` are operational documentation for the
 application teams that own those repositories.
