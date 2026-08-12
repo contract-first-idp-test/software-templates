@@ -14,6 +14,14 @@ spec:
   destinations:
     - server: ${{ values.destinationServer }}
       namespace: ${{ values.argocdNamespace }}
+  clusterResourceWhitelist:
+    - {group: external-secrets.io, kind: ClusterSecretStore}
   namespaceResourceWhitelist:
+    - {group: "", kind: ServiceAccount}
     - {group: argoproj.io, kind: AppProject}
     - {group: argoproj.io, kind: ApplicationSet}
+    - {group: external-secrets.io, kind: ExternalSecret}
+    - {group: generators.external-secrets.io, kind: Password}
+    - {group: k8s.keycloak.org, kind: KeycloakOIDCClient}
+    - {group: rbac.authorization.k8s.io, kind: Role}
+    - {group: rbac.authorization.k8s.io, kind: RoleBinding}

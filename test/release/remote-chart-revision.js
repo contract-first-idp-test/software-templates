@@ -13,7 +13,7 @@ const dependency = target.spec.platform.dependencies.developerCharts;
 const charts = target.spec.platform.charts;
 const requiredCharts = [
   'charts/api/openapi/Chart.yaml',
-  'charts/component/openjdk/Chart.yaml',
+  'charts/component/container/Chart.yaml',
   'charts/domain/environment/Chart.yaml',
   'charts/resource/postgresql/Chart.yaml',
   'charts/system/environment/Chart.yaml',

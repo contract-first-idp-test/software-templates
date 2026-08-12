@@ -8,7 +8,8 @@ const source = fs.readFileSync(
   path.join(root, 'templates/component/template.yaml'), 'utf8');
 const template = YAML.parse(source);
 const requiredSteps = [
-  'fetchSystem', 'fetchDomain', 'fetchTarget', 'fetchApi', 'fetchConsumedApis',
+  'fetchSystem', 'fetchDomain', 'fetchTarget', 'resolveBuildProfile',
+  'fetchApi', 'fetchConsumedApis',
   'resolveApiMetadata', 'fetchConsumedContracts', 'parseConsumedContracts',
   'discoverConsumedOperations', 'renderImplementation', 'renderBase',
   'renderComponentDesiredState', 'renderComponentEnvironment', 'publish',
@@ -48,13 +49,14 @@ function apiEntity({namespace = 'default', name, group, artifact = name}) {
   };
 }
 
-test('Component has the exact 17-step workflow and three Roadie actions', () => {
+test('Component has the exact 18-step workflow and four Roadie actions', () => {
   expect(template.spec.steps.map(candidate => candidate.id)).toEqual(requiredSteps);
-  expect(template.spec.steps).toHaveLength(17);
+  expect(template.spec.steps).toHaveLength(18);
   expect(template.spec.steps.filter(candidate =>
     candidate.action.startsWith('roadiehq:')).map(candidate => [
       candidate.id, candidate.action,
-    ])).toEqual([
+  ])).toEqual([
+    ['resolveBuildProfile', 'roadiehq:utils:jsonata'],
     ['resolveApiMetadata', 'roadiehq:utils:jsonata'],
     ['parseConsumedContracts', 'roadiehq:utils:fs:parse'],
     ['discoverConsumedOperations', 'roadiehq:utils:jsonata'],
@@ -69,6 +71,12 @@ test('provided and consumed API pickers require OpenAPI entities', () => {
     section.properties?.implementationProfile);
   expect(parameters.properties.implementationProfile.default)
     .toBe('quarkus-camel-openapi');
+  expect(parameters.properties.implementationProfile.enum).toContain('nodejs-openapi');
+  const quarkus = parameters.dependencies.implementationProfile.oneOf.find(branch =>
+    branch.properties?.quarkusBuildTarget);
+  expect(quarkus.properties.quarkusBuildTarget).toMatchObject({
+    default: 'jvm', enum: ['jvm', 'native'],
+  });
   const consumed = parameters.properties.consumedApis.items.properties;
   expect(consumed.apiRef['ui:options'].catalogFilter)
     .toEqual([{kind: 'API', 'spec.type': 'openapi'}]);
@@ -78,6 +86,21 @@ test('provided and consumed API pickers require OpenAPI entities', () => {
   expect(provided.apiRef['ui:options'].catalogFilter)
     .toEqual([{kind: 'API', 'spec.type': 'openapi'}]);
   expect(provided.providedApiVersion.pattern).toBe(consumed.version.pattern);
+});
+
+test.each([
+  ['quarkus-camel-openapi', 'jvm', 'quarkus-jvm'],
+  ['quarkus-camel-openapi-yaml', 'native', 'quarkus-native'],
+  ['spring-boot-camel-openapi', 'jvm', 'spring-boot'],
+  ['spring-boot-openapi', 'jvm', 'spring-boot'],
+  ['nodejs-openapi', 'jvm', 'nodejs'],
+])('resolves %s/%s to the approved %s recipe', async (
+  implementationProfile, quarkusBuildTarget, expected,
+) => {
+  const result = await jsonata(step('resolveBuildProfile').input.expression).evaluate({
+    implementationProfile, quarkusBuildTarget,
+  });
+  expect(result).toBe(expected);
 });
 
 test('Component consumes target and catalog each outputs directly', () => {
@@ -256,10 +279,13 @@ test('resolved APIs reach rendering and desired state owns initial release', () 
       .toBe('${{ steps.discoverConsumedOperations.output.result.consumed_apis }}');
   }
   expect(step('renderComponentDesiredState').input.values).toMatchObject({
+    buildProfile: '${{ steps.resolveBuildProfile.output.result }}',
     buildEnabled: true,
     sourceRevision: 'main',
     buildEnvironment: '${{ steps.fetchDomain.output.entity.spec.environments.build }}',
   });
+  expect(step('renderComponentDesiredState').input.values).not.toHaveProperty('dockerfilePath');
+  expect(source).not.toContain("'quarkus' in parameters.implementationProfile");
   expect(fs.existsSync(path.join(root,
     'skeletons/component/system-repo/base/releases/${{ values.buildEnvironment }}.yaml')))
     .toBe(true);

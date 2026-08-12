@@ -11,19 +11,30 @@ const profiles = [
   'spring-boot-camel-openapi',
   'quarkus-camel-openapi',
   'quarkus-camel-openapi-yaml',
+  'nodejs-openapi',
 ];
 
-function verify(directory) {
+function run(directory, command, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn('./mvnw', ['-ntp', '-q', 'verify'], {
+    const child = spawn(command, args, {
       cwd: directory,
       stdio: 'inherit',
     });
     child.on('error', reject);
     child.on('close', code => code === 0
       ? resolve()
-      : reject(new Error(`Maven verify exited ${code} in ${directory}`)));
+      : reject(new Error(`${command} ${args.join(' ')} exited ${code} in ${directory}`)));
   });
+}
+
+async function verify(directory, profile) {
+  if (profile === 'nodejs-openapi') {
+    await run(directory, 'npm', ['ci', '--ignore-scripts']);
+    await run(directory, 'npm', ['test']);
+    await run(directory, 'npm', ['run', 'build']);
+    return;
+  }
+  await run(directory, './mvnw', ['-ntp', '-q', 'verify']);
 }
 
 async function main() {
@@ -41,8 +52,8 @@ async function main() {
           consumed_apis: [],
         }),
       });
-      await verify(directory);
-      console.log(`Maven baseline passed: ${profile}`);
+      await verify(directory, profile);
+      console.log(`Build baseline passed: ${profile}`);
     }
   } finally {
     await fs.rm(temporaryRoot, {recursive: true, force: true});

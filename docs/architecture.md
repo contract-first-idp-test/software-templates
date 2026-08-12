@@ -233,9 +233,14 @@ Component form presents the profiles in this order:
 | 2 | Quarkus Camel OpenAPI — YAML DSL | Quarkus when declarative routes are preferred |
 | 3 | Spring Boot Camel OpenAPI — Java DSL | Spring Boot applications that require Camel |
 | 4 | Spring Boot OpenAPI | Spring Boot applications without Camel route scaffolding |
+| 5 | Node.js OpenAPI | Minimal Node 24 service using built-in HTTP, fetch, and test APIs |
 
-All profiles target Java 21 and include a Maven wrapper. Main commits are built once; releases and
-promotions move immutable digests rather than rebuilding source.
+The template resolves developer choices into one platform build profile: Quarkus selects
+`quarkus-jvm` or `quarkus-native`, both Spring implementations select `spring-boot`, and Node
+selects `nodejs`. Generated System desired state contains only `build.profile`; trusted chart code
+owns builders, commands, Dockerfile paths, and runtime defaults. Java profiles target Java 21 and
+include a Maven wrapper. Node targets Node 24 with a locked npm install. Main commits are built
+once; releases and promotions move immutable digests rather than rebuilding source.
 
 ```mermaid
 flowchart TD
@@ -260,9 +265,8 @@ git push origin v1.7.3
 ```
 
 Release materialization is asynchronous and does not alter System desired state. Promotion is a
-separate pull request. The current build-environment release task copies the commit image to the
-human tag without checking whether that tag already exists, so Quay or release policy must prevent
-tag movement. A target Deployment may briefly report `ImagePullBackOff` while the promotion
+separate pull request. The shared digest guard rejects moving an existing human tag to a different
+artifact. A target Deployment may briefly report `ImagePullBackOff` while the promotion
 Pipeline copies the image; Kubernetes retries until the digest-checked target-local tag is
 available.
 

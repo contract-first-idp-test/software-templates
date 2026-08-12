@@ -49,6 +49,9 @@ describe('portable Domain and admission contracts', () => {
     expect((project.match(/^    - /gm) || []).length).toBeGreaterThanOrEqual(3);
     expect(project).toContain('${{ values.developerChartsRepositoryUrl }}');
     expect(project).toContain('${{ values.repositoryName }}.git');
+    expect(project).toContain('kind: ClusterSecretStore');
+    expect(project).toContain('kind: KeycloakOIDCClient');
+    expect(project).not.toMatch(/group: ["']?\*["']?|kind: ["']?\*["']?/);
     expect(project).toContain('${{ values.platformRepositoryName }}.git');
     expect(application).toContain('$domain/catalog-info.yaml');
     expect(application).toContain('$platform/${{ values.platformTargetValuesPath }}');

@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: component-golden-path
   title: Component Golden Path
-  description: Create a complete Tekton-built Java Component repository.
+  description: Create a complete Tekton-built Component repository.
   annotations:
     backstage-gitea.io/github-compatible: 'true'
   tags: [contract-first, api, component, tekton]
@@ -36,11 +36,13 @@ spec:
             - quarkus-camel-openapi-yaml
             - spring-boot-camel-openapi
             - spring-boot-openapi
+            - nodejs-openapi
           enumNames:
             - Quarkus Camel OpenAPI Java DSL (Recommended)
             - Quarkus Camel OpenAPI YAML DSL
             - Spring Boot Camel OpenAPI Java DSL
             - Spring Boot OpenAPI
+            - Node.js OpenAPI
         implementsApi: {title: Provides an API, type: boolean, default: false}
         consumedApis:
           title: Consumed APIs
@@ -67,6 +69,21 @@ spec:
                 default: latest
                 pattern: '^(latest|v[0-9]+(\.[0-9]+){0,2}(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?|[0-9a-fA-F]{40})$'
       dependencies:
+        implementationProfile:
+          oneOf:
+            - properties:
+                implementationProfile:
+                  enum: [quarkus-camel-openapi, quarkus-camel-openapi-yaml]
+                quarkusBuildTarget:
+                  title: Quarkus build target
+                  type: string
+                  default: jvm
+                  enum: [jvm, native]
+                  enumNames: [JVM (Recommended), Native executable]
+              required: [quarkusBuildTarget]
+            - properties:
+                implementationProfile:
+                  enum: [spring-boot-camel-openapi, spring-boot-openapi, nodejs-openapi]
         implementsApi:
           oneOf:
             - properties:
@@ -110,6 +127,23 @@ spec:
         entityRef: ${{ steps.fetchDomain.output.entity.spec.platformTarget }}
         defaultKind: Resource
         defaultNamespace: default
+    - id: resolveBuildProfile
+      name: Resolve approved build profile
+      action: roadiehq:utils:jsonata
+      input:
+        data:
+          implementationProfile: ${{ parameters.implementationProfile }}
+          quarkusBuildTarget: ${{ parameters.quarkusBuildTarget or 'jvm' }}
+        expression: >-
+          (
+            implementationProfile in ["quarkus-camel-openapi", "quarkus-camel-openapi-yaml"]
+              ? (quarkusBuildTarget = "native" ? "quarkus-native" : "quarkus-jvm")
+              : implementationProfile in ["spring-boot-camel-openapi", "spring-boot-openapi"]
+                ? "spring-boot"
+                : implementationProfile = "nodejs-openapi"
+                  ? "nodejs"
+                  : $error("Unsupported implementation profile: " & implementationProfile)
+          )
     - id: fetchApi
       name: Fetch provided API
       if: ${{ parameters.implementsApi }}
@@ -235,6 +269,7 @@ spec:
           component_id: ${{ parameters.componentName }}
           componentName: ${{ parameters.componentName }}
           implementationProfile: ${{ parameters.implementationProfile }}
+          build_profile: ${{ steps.resolveBuildProfile.output.result }}
           description: ${{ parameters.description }}
           owner: group:default/domain-maintainers
           system_ref: ${{ parameters.systemRef }}
@@ -259,6 +294,7 @@ spec:
           owner: group:default/domain-maintainers
           systemRef: ${{ parameters.systemRef }}
           implementationProfile: ${{ parameters.implementationProfile }}
+          buildProfile: ${{ steps.resolveBuildProfile.output.result }}
           implementsApi: ${{ parameters.implementsApi }}
           apiRef: ${{ parameters.apiRef if parameters.implementsApi else null }}
           schemaRegistryApiUrl: ${{ steps.fetchTarget.output.entity.spec.platform.schemaRegistry.apiUrl }}
@@ -279,20 +315,19 @@ spec:
           componentName: ${{ parameters.componentName }}
           componentRepoCloneUrl: https://${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/scm-host'] }}/${{ steps.fetchDomain.output.entity.metadata.annotations['contract-first-idp.github.io/domain-org'] }}/${{ steps.fetchSystem.output.entity.metadata.name }}-${{ parameters.componentName }}-service.git
           implementationProfile: ${{ parameters.implementationProfile }}
-          dockerfilePath: ${{ './src/main/docker/Dockerfile.jvm' if 'quarkus' in parameters.implementationProfile else './src/main/docker/Dockerfile' }}
+          buildProfile: ${{ steps.resolveBuildProfile.output.result }}
           buildEnabled: true
           sourceRevision: main
           buildEnvironment: ${{ steps.fetchDomain.output.entity.spec.environments.build }}
     - id: renderComponentEnvironment
       each: ${{ steps.fetchDomain.output.entity.spec.environments.order }}
-      name: Render Component environment ${{ each.value }}
+      name: Render Component environments
       action: fetch:template
       input:
         url: ../../skeletons/component/system-repo/environment
         targetPath: system-pr/components/${{ parameters.componentName }}/environments
         values:
           environment: ${{ each.value }}
-          implementationProfile: ${{ parameters.implementationProfile }}
           buildEnvironment: ${{ steps.fetchDomain.output.entity.spec.environments.build }}
     - id: publish
       name: Publish Component repository

@@ -6,6 +6,7 @@ ${{ values.description }}
 | --- | --- |
 | System | `${{ values.systemRef }}` |
 | Implementation profile | `${{ values.implementationProfile }}` |
+| Approved build profile | `${{ values.buildProfile }}` |
 | Build service | Tekton/OpenShift Pipelines |
 | Schema Registry API | `${{ values.schemaRegistryApiUrl }}` |
 
@@ -49,20 +50,15 @@ Creating a release does not promote an environment. After materialization succee
 repository. Merging it selects the release for the next environment and starts target-local image
 promotion. To roll back, select an older release through the same workflow.
 
-The current build-environment materialization task does not prevent an existing human tag from
-being moved. Enforce tag immutability in Quay or through release policy.
+The shared release guard permits an absent human tag or one already resolving to the same digest;
+it rejects attempts to move an existing tag to a different artifact.
 
 ## Local Development
 
-Use the checked-in Maven wrapper so local and pipeline builds share project configuration:
-
-```bash
-./mvnw test
-./mvnw package
-{% if 'quarkus' in values.implementationProfile %}./mvnw quarkus:dev{% else %}./mvnw spring-boot:run{% endif %}
-```
-
-The `.devfile.yaml` provides the corresponding editor and workspace entrypoint.
+Use the checked-in implementation tooling so local and pipeline builds share project configuration.
+Java profiles provide the Maven wrapper (`./mvnw test`); the Node.js profile uses reproducible npm
+commands (`npm ci && npm test`). The `.devfile.yaml` provides the matching editor and workspace
+entrypoint.
 
 ## Runtime Configuration
 
@@ -79,9 +75,9 @@ artifact selection.
 
 ## API Dependencies
 
-Maven downloads selected contracts from the Schema Registry during `initialize` and writes them
-under `target/generated-resources/openapi`. Reviewable selections live in
-`api-dependencies.yaml`.
+Java implementations download selected contracts from the Schema Registry during Maven
+`initialize` and write them under `target/generated-resources/openapi`. Node.js keeps the same
+catalog wiring and can retrieve a selected contract through the generated Registry content URL.
 
 | Selection | Build behavior |
 | --- | --- |

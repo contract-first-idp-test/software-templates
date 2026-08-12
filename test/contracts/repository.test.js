@@ -268,12 +268,14 @@ describe('registered template contracts', () => {
     }
   });
 
-  it('does not generate registry credentials or use the forbidden internal registry', () => {
+  it('does not generate credential values or use the forbidden internal registry', () => {
     const sources = fs.readdirSync(path.join(root, 'skeletons'), {recursive: true})
       .filter(relative => fs.statSync(path.join(root, 'skeletons', relative)).isFile())
       .map(relative => fs.readFileSync(path.join(root, 'skeletons', relative), 'utf8'))
       .join('\n');
     expect(sources).not.toContain('image-registry.openshift-image-registry.svc:5000');
-    expect(sources).not.toMatch(/\.dockerconfigjson|clientSecret|BEGIN PRIVATE KEY/);
+    expect(sources).not.toMatch(/\.dockerconfigjson|BEGIN PRIVATE KEY/);
+    expect(sources).toContain('<clientSecret>${env.APICURIO_CLIENT_SECRET}</clientSecret>');
+    expect(sources).not.toMatch(/<clientSecret>(?!\$\{env\.)[^<]+<\/clientSecret>/);
   });
 });

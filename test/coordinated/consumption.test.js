@@ -115,7 +115,7 @@ describe('generated Git output is consumed at the exact coordinated paths', () =
       path: 'tenants', renderer: 'directory',
     });
     expect(applicationSet.spec.templatePatch).toMatch(
-      /else if eq \.renderer "directory"[\s\S]*directory:\s*\n\s+recurse: true/,
+      /if eq \(get \. "renderer" \| default "kustomize"\) "directory"[\s\S]*directory:\s*\n\s+recurse: true/,
     );
     expect(fs.existsSync(path.join(platformRoot, 'tenants/kustomization.yaml'))).toBe(false);
   });

@@ -49,6 +49,7 @@ paths:
                   schema:
                       format: int32
                       type: integer
+                      example: 0
                   in: path
                   required: true
             responses:
@@ -57,6 +58,18 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/ProductDetails"
+                            examples:
+                                productDetails:
+                                    value:
+                                        id: 0
+                                        author: William Shakespeare
+                                        year: 1595
+                                        type: paperback
+                                        pages: 200
+                                        publisher: PublisherA
+                                        language: English
+                                        ISBN-10: "1234567890"
+                                        ISBN-13: "123-1234567890"
                     description: successful operation
                 "400":
                     description: Invalid product id
@@ -74,6 +87,7 @@ paths:
                   schema:
                       format: int32
                       type: integer
+                      example: 0
                   in: path
                   required: true
             responses:
@@ -82,6 +96,21 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/ProductReviews"
+                            examples:
+                                productReviews:
+                                    value:
+                                        id: 0
+                                        reviews:
+                                            - reviewer: Reviewer1
+                                              text: An extremely entertaining play by Shakespeare. The slapstick humour is refreshing!
+                                              rating:
+                                                  stars: 5
+                                                  color: black
+                                            - reviewer: Reviewer2
+                                              text: Absolutely fun and entertaining. The play lacks thematic depth when compared to other plays by Shakespeare.
+                                              rating:
+                                                  stars: 4
+                                                  color: black
                     description: successful operation
                 "400":
                     description: Invalid product id
@@ -99,6 +128,7 @@ paths:
                   schema:
                       format: int32
                       type: integer
+                      example: 0
                   in: path
                   required: true
             responses:
@@ -107,6 +137,13 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/ProductRatings"
+                            examples:
+                                productRatings:
+                                    value:
+                                        id: 0
+                                        ratings:
+                                            Reviewer1: "5"
+                                            Reviewer2: "4"
                     description: successful operation
                 "400":
                     description: Invalid product id

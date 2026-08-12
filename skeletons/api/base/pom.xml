@@ -22,6 +22,9 @@
         <version>3.2.5</version>
         <configuration>
           <registryUrl>${{ values.schemaRegistryApiUrl }}</registryUrl>
+          <authServerUrl>${env.APICURIO_AUTH_SERVER_URL}/protocol/openid-connect/token</authServerUrl>
+          <clientId>${env.APICURIO_CLIENT_ID}</clientId>
+          <clientSecret>${env.APICURIO_CLIENT_SECRET}</clientSecret>
           <artifacts>
             <artifact>
               <groupId>${project.groupId}</groupId>

@@ -16,6 +16,7 @@ const profiles = [
   'spring-boot-camel-openapi',
   'quarkus-camel-openapi',
   'quarkus-camel-openapi-yaml',
+  'nodejs-openapi',
 ];
 const exactSha = '0123456789abcdef0123456789abcdef01234567';
 
@@ -64,14 +65,28 @@ describe('Component implementation profiles', () => {
         if (!content.subarray(0, 8192).includes(0)) textFiles.push(content.toString('utf8'));
       }
       const generated = textFiles.join('\n');
-      const pom = await fs.readFile(path.join(destination, 'pom.xml'), 'utf8');
-
-      expect(XMLValidator.validate(pom)).toBe(true);
       expect(generated).not.toContain('${{');
       expect(generated).not.toContain('{%');
+      expect(generated).not.toMatch(/\.dockerconfigjson|clientSecret|BEGIN PRIVATE KEY/);
+
+      if (profile === 'nodejs-openapi') {
+        const packageJson = JSON.parse(await fs.readFile(
+          path.join(destination, 'package.json'), 'utf8'));
+        expect(packageJson.engines.node).toBe('>=24 <25');
+        expect(packageJson.scripts).toMatchObject({
+          build: 'node --check src/server.js', test: 'node --test',
+        });
+        expect(generated).toContain("import http from 'node:http'");
+        expect(generated).toContain('/health/ready');
+        expect(generated).toContain('/health/live');
+        expect(generated).toContain('registry.access.redhat.com/ubi9/nodejs-24:latest');
+        continue;
+      }
+
+      const pom = await fs.readFile(path.join(destination, 'pom.xml'), 'utf8');
+      expect(XMLValidator.validate(pom)).toBe(true);
       expect(pom).toContain('<groupId>io.github.cfidp.storefront</groupId>');
       expect(pom).toContain('<artifactId>registry-verification</artifactId>');
-      expect(generated).not.toMatch(/\.dockerconfigjson|clientSecret|BEGIN PRIVATE KEY/);
 
       if (scenario === 'basic') {
         expect(pom).not.toContain('apicurio-registry-maven-plugin');
@@ -109,7 +124,7 @@ test('Component desired-state base includes values and the initial build release
       componentName: 'storefront-client',
       componentRepoCloneUrl: 'https://git.example/storefront-client.git',
       implementationProfile: 'quarkus-camel-openapi',
-      dockerfilePath: './src/main/docker/Dockerfile.jvm',
+      buildProfile: 'quarkus-native',
       buildEnabled: true,
       sourceRevision: 'main',
       buildEnvironment: 'sandbox',
@@ -125,14 +140,19 @@ test('Component desired-state base includes values and the initial build release
       destination: path.join(destination, 'environments'),
       values,
     });
-    expect(YAML.parse(await fs.readFile(path.join(destination, 'values.yaml'), 'utf8')))
-      .toHaveProperty('build.enabled', true);
+    const desiredState = YAML.parse(await fs.readFile(path.join(destination, 'values.yaml'), 'utf8'));
+    expect(desiredState).toHaveProperty('build.enabled', true);
+    expect(desiredState).toHaveProperty('build.profile', 'quarkus-native');
+    expect(desiredState.build).not.toHaveProperty('dockerfilePath');
     expect(YAML.parse(await fs.readFile(
       path.join(destination, 'releases/sandbox.yaml'), 'utf8')))
       .toEqual({image: {tag: 'latest'}});
     expect(YAML.parse(await fs.readFile(
       path.join(destination, 'environments/sandbox.yaml'), 'utf8')))
       .toHaveProperty('image.pullPolicy', 'Always');
+    const environmentSource = await fs.readFile(path.join(root,
+      'skeletons/component/system-repo/environment/${{ values.environment }}.yaml'), 'utf8');
+    expect(environmentSource).not.toMatch(/quarkus|spring|nodejs|implementationProfile/);
   } finally {
     await fs.rm(destination, {recursive: true, force: true});
   }

@@ -210,7 +210,8 @@ try {
         runtimePullSecretName: 'runtime-registry-auth',
       },
     },
-    schemaRegistry: {apiUrl: 'https://registry.example/apis/registry/v3'},
+    schemaRegistry: targetCatalog.spec.platform.schemaRegistry,
+    microcks: targetCatalog.spec.platform.services.microcks,
     spectralRules: targetCatalog.spec.platform.spectralRules,
     build: {
       environment: 'sandbox',
@@ -251,7 +252,7 @@ try {
     buildEnabled: false,
     componentRepoCloneUrl: 'https://tenant.example/retail-team/checkout.git',
     sourceRevision: 'main',
-    dockerfilePath: './src/main/docker/Dockerfile.jvm',
+    buildProfile: 'quarkus-jvm',
     releaseVersion: 'v1.2.3',
     targetEnvironment: 'stage',
   };
@@ -260,7 +261,7 @@ try {
     {values: componentValues},
   );
 
-  const componentEnvironmentResources = renderChart('charts/component/openjdk', [
+  const componentEnvironmentResources = renderChart('charts/component/container', [
     render('skeletons/component/system-repo/base/values.yaml'),
     render('skeletons/component/system-repo/environment/${{ values.environment }}.yaml'),
     {
@@ -288,7 +289,7 @@ try {
     fs.readFileSync(path.join(root, relative), 'utf8'),
     {values: buildComponentValues},
   );
-  const buildComponentResources = renderChart('charts/component/openjdk', [
+  const buildComponentResources = renderChart('charts/component/container', [
     renderBuildComponent('skeletons/component/system-repo/base/values.yaml'),
     renderBuildComponent(
       'skeletons/component/system-repo/environment/${{ values.environment }}.yaml'),
@@ -314,7 +315,7 @@ try {
     }
   }
 
-  const promotedComponentResources = renderChart('charts/component/openjdk', [
+  const promotedComponentResources = renderChart('charts/component/container', [
     render('skeletons/component/system-repo/base/values.yaml'),
     render('skeletons/component/system-repo/environment/${{ values.environment }}.yaml'),
     render('skeletons/component/promotion/${{ values.targetEnvironment }}.yaml'),

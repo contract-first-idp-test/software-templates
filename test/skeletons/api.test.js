@@ -37,6 +37,10 @@ test('API skeleton renders valid XML and catalog YAML', async () => {
     const pom = await fs.readFile(path.join(destination, 'base/pom.xml'), 'utf8');
     expect(XMLValidator.validate(pom)).toBe(true);
     expect(pom).not.toContain('${{');
+    expect(pom).toContain(
+      '<authServerUrl>${env.APICURIO_AUTH_SERVER_URL}/protocol/openid-connect/token</authServerUrl>');
+    expect(pom).toContain('<clientId>${env.APICURIO_CLIENT_ID}</clientId>');
+    expect(pom).toContain('<clientSecret>${env.APICURIO_CLIENT_SECRET}</clientSecret>');
     const catalog = YAML.parse(await fs.readFile(
       path.join(destination, 'catalog/catalog-info.yaml'), 'utf8'));
     expect(catalog.metadata.annotations).toMatchObject({
