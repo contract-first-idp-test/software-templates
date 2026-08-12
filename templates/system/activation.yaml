@@ -60,9 +60,9 @@ spec:
             $platform := $parts(platformVersion);
             $charts := $parts(developerChartsVersion);
             $not($gte($platform, [1, 1, 0]) and $lt($platform, [2, 0, 0]))
-              ? $error("This software-templates 1.1.0 release requires platform-components >=1.1.0 <2.0.0. The selected Platform Target provides platform-components " & platformVersion & ". Upgrade the Platform Target or use a compatible software-templates release.")
+              ? $error("This software-templates 1.1.1 release requires platform-components >=1.1.0 <2.0.0. The selected Platform Target provides platform-components " & platformVersion & ". Upgrade the Platform Target or use a compatible software-templates release.")
               : $not($gte($charts, [1, 0, 0]) and $lt($charts, [1, 1, 0]))
-              ? $error("This software-templates 1.1.0 release requires developer-charts >=1.0.0 <1.1.0. The selected Platform Target provides developer-charts " & developerChartsVersion & ". Upgrade the Platform Target or use a compatible software-templates release.")
+              ? $error("This software-templates 1.1.1 release requires developer-charts >=1.0.0 <1.1.0. The selected Platform Target provides developer-charts " & developerChartsVersion & ". Upgrade the Platform Target or use a compatible software-templates release.")
               : {"compatible": true}
           )
     - id: reportInvalidEnvironment

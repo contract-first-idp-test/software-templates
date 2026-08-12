@@ -76,11 +76,11 @@ const softwareTemplatesRelease = YAML.parse(fs.readFileSync(
   path.join(root, 'release.yaml'), 'utf8'));
 const developerChartsRelease = YAML.parse(fs.readFileSync(
   path.join(chartsRoot, 'release.yaml'), 'utf8'));
-if (targetCatalog.spec.platform.dependencies.developerCharts.revision !==
-    `v${developerChartsRelease.version}` ||
-    targetCatalog.spec.platform.dependencies.developerCharts.version !==
-    developerChartsRelease.version) {
-  throw new Error('Platform developer-charts coordinate does not match the repository release');
+if (!semver.satisfies(
+  targetCatalog.spec.platform.distribution.version,
+  developerChartsRelease.requires.platformComponents,
+)) {
+  throw new Error('Current PlatformTarget does not satisfy developer-charts platform requirement');
 }
 if (!semver.satisfies(
   targetCatalog.spec.platform.distribution.version,

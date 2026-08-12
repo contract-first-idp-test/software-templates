@@ -19,7 +19,7 @@ const release = YAML.parse(fs.readFileSync(path.join(root, 'release.yaml'), 'utf
 describe('software-templates release compatibility', () => {
   test('declares independent platform and chart requirements', () => {
     expect(release).toEqual({
-      version: '1.1.0',
+      version: '1.1.1',
       requires: {
         platformComponents: '>=1.1.0 <2.0.0',
         developerCharts: '>=1.0.0 <1.1.0',

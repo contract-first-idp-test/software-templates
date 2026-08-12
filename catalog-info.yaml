@@ -4,7 +4,7 @@ metadata:
   name: contract-first-idp-software-templates
   description: Contract-first golden path templates
   annotations:
-    contract-first-idp.github.io/release-version: 1.1.0
+    contract-first-idp.github.io/release-version: 1.1.1
 spec:
   type: url
   targets:
