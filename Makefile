@@ -8,12 +8,12 @@ test: test-install
 	npm test --prefix test
 
 release-check: test
-	node scripts/validate-release.js
+	node test/validate-release.js
 
 release-compatibility-check:
 	DEVELOPER_CHARTS_DIR="$(DEVELOPER_CHARTS_DIR)" \
 	PLATFORM_COMPONENTS_DIR="$(PLATFORM_COMPONENTS_DIR)" \
-		node scripts/validate-sibling-releases.js
+		node test/validate-sibling-releases.js
 
 test-install:
 	npm ci --prefix test --loglevel=error

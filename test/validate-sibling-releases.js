@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+// Cross-repository release compatibility validation.
+
 const fs = require('node:fs');
 const path = require('node:path');
 const {createRequire} = require('node:module');
