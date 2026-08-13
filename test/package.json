@@ -4,8 +4,7 @@
   "type": "commonjs",
   "scripts": {
     "release:validate": "node ../scripts/validate-release.js",
-    "generate:compatibility": "node ../scripts/generate-compatibility.js",
-    "check:compatibility": "node ../scripts/generate-compatibility.js --check",
+    "release:compatibility": "node ../scripts/validate-sibling-releases.js",
     "test": "jest --runInBand --config jest.config.js",
     "test:contracts": "jest --runInBand --config jest.config.js contracts",
     "test:skeletons": "jest --runInBand --config jest.config.js skeletons",

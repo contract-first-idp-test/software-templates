@@ -54,17 +54,6 @@ spec:
         entityRef: ${{ steps.fetchDomain.output.entity.spec.platformTarget }}
         defaultKind: Resource
         defaultNamespace: default
-    - id: validateCompatibility
-      name: Validate platform compatibility
-      action: contract-first-idp:validate-compatibility
-      input:
-        releaseVersion: "1.0.0"
-        requires:
-          platformComponents: ">=1.0.0 <2.0.0"
-          developerCharts: ">=1.0.0 <2.0.0"
-        selected:
-          platformComponents: ${{ steps.fetchTarget.output.entity.spec.platform.distribution.version }}
-          developerCharts: ${{ steps.fetchTarget.output.entity.spec.platform.dependencies.developerCharts.version }}
     - id: renderApiBase
       name: Render OpenAPI repository
       action: fetch:template

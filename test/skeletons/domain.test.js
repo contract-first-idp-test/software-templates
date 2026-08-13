@@ -75,14 +75,15 @@ test('platform admission skeleton renders exactly three trusted repositories', a
       'https://github.com/retail-team/retail-domain.git',
       'https://github.com/contract-first-idp/platform-components.git',
     ]);
-    const admission = YAML.parse(await fs.readFile(
-      path.join(destination, 'admission.yaml'), 'utf8'));
-    expect(admission.admission).toEqual({
-      name: 'retail',
-      project: 'tenant-retail-admission',
-      repositoryUrl: 'https://github.com/retail-team/retail-domain.git',
-    });
-    await expect(fs.access(path.join(destination, 'application.yaml'))).rejects.toThrow();
+    const application = YAML.parse(await fs.readFile(
+      path.join(destination, 'application.yaml'), 'utf8'));
+    expect(application.spec.sources).toHaveLength(3);
+    expect(application.metadata.annotations['argocd.argoproj.io/sync-wave']).toBe('1');
+    expect(application.spec.sources[0].helm.valueFiles).toEqual([
+      '$platform/catalog-info.yaml',
+      '$domain/catalog-info.yaml',
+    ]);
+    expect(application.spec.sources[0].path).toBe('charts/domain/environment');
   } finally {
     await fs.rm(destination, {recursive: true, force: true});
   }

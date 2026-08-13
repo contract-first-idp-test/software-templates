@@ -13,11 +13,11 @@ describe('generated Git output is consumed at the exact coordinated paths', () =
   test('the sibling platform root catalog remains the single target contract', () => {
     expect(fs.existsSync(path.join(
       platformRoot, 'targets/workshop/domain-values.yaml'))).toBe(false);
-    expect(YAML.parse(read(platformRoot, 'configuration/catalog-info.yaml'))).toMatchObject({
+    expect(YAML.parse(read(platformRoot, 'catalog-info.yaml'))).toMatchObject({
       kind: 'Resource',
       spec: {
         type: 'contract-first-idp-target',
-        platform: {configuration: {valuesPath: 'configuration/catalog-info.yaml'}},
+        platform: {configuration: {valuesPath: 'catalog-info.yaml'}},
       },
     });
   });
@@ -103,10 +103,10 @@ describe('generated Git output is consumed at the exact coordinated paths', () =
     );
     const project = YAML.parse(read(
       root, 'skeletons/domain/platform-admission/project.yaml'));
+    const application = YAML.parse(read(
+      root, 'skeletons/domain/platform-admission/application.yaml'));
     expect(project.metadata.annotations['argocd.argoproj.io/sync-wave']).toBe('0');
-    const admission = YAML.parse(read(
-      root, 'skeletons/domain/platform-admission/admission.yaml'));
-    expect(admission.admission).toHaveProperty('repositoryUrl');
+    expect(application.metadata.annotations['argocd.argoproj.io/sync-wave']).toBe('1');
 
     const applicationSet = YAML.parse(read(
       platformRoot, 'bootstrap/root/platform-applicationset.yaml'));
@@ -117,14 +117,6 @@ describe('generated Git output is consumed at the exact coordinated paths', () =
     expect(applicationSet.spec.templatePatch).toMatch(
       /if eq \(get \. "renderer" \| default "kustomize"\) "directory"[\s\S]*directory:\s*\n\s+recurse: true/,
     );
-    expect(applicationSet.spec.templatePatch).toContain("exclude: '*/admission.yaml'");
-    const domainSet = YAML.parse(read(
-      platformRoot, 'bootstrap/root/tenant-domain-applicationset.yaml'));
-    expect(domainSet.spec.template.spec.sources[0]).toMatchObject({
-      repoURL: '{{ .spec.platform.dependencies.developerCharts.repositoryUrl }}',
-      targetRevision: '{{ .spec.platform.dependencies.developerCharts.revision }}',
-      path: 'charts/domain/environment',
-    });
     expect(fs.existsSync(path.join(platformRoot, 'tenants/kustomization.yaml'))).toBe(false);
   });
 });

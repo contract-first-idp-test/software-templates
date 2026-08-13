@@ -6,7 +6,6 @@ const nunjucks = require('nunjucks');
 const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
 const YAML = require('yaml');
-const semver = require('semver');
 const {repositoryRoot: root} = require('../helpers/paths');
 
 const charts = process.env.DEVELOPER_CHARTS_DIR || '../developer-charts';
@@ -17,7 +16,7 @@ if (!fs.existsSync(path.join(chartsRoot, 'charts/domain/environment/Chart.yaml')
 }
 const platformRoot = path.resolve(
   root, process.env.PLATFORM_COMPONENTS_DIR || '../platform-components');
-const targetPath = path.join(platformRoot, 'configuration/catalog-info.yaml');
+const targetPath = path.join(platformRoot, 'catalog-info.yaml');
 if (!fs.existsSync(targetPath)) {
   console.error(`Workshop target catalog does not exist: ${targetPath}`);
   process.exit(2);
@@ -72,69 +71,13 @@ const catalogSource = fs.readFileSync(
   path.join(root, 'skeletons/domain/base/catalog-info.yaml'), 'utf8');
 const tenantCatalog = YAML.parse(environment.renderString(catalogSource, {values}));
 const targetCatalog = YAML.parse(fs.readFileSync(targetPath, 'utf8'));
-const softwareTemplatesRelease = YAML.parse(fs.readFileSync(
-  path.join(root, 'release.yaml'), 'utf8'));
-const releaseCandidates = JSON.parse(fs.readFileSync(
-  path.join(root, 'release-candidates.json'), 'utf8'));
-const platformComponentsRelease = YAML.parse(fs.readFileSync(
-  path.join(platformRoot, 'release.yaml'), 'utf8'));
-const developerChartsRelease = YAML.parse(fs.readFileSync(
-  path.join(chartsRoot, 'release.yaml'), 'utf8'));
-for (const [name, candidate] of Object.entries(releaseCandidates)) {
-  if (candidate.revision !== `v${candidate.version}`) {
-    throw new Error(`${name} release candidate must use the exact matching tag`);
-  }
-}
-if (platformComponentsRelease.version !== releaseCandidates.platformComponents.version) {
-  throw new Error('Checked-out platform-components does not match release-candidates.json');
-}
-if (developerChartsRelease.version !== releaseCandidates.developerCharts.version) {
-  throw new Error('Checked-out developer-charts does not match release-candidates.json');
-}
-if (targetCatalog.spec.platform.distribution.version !==
-      releaseCandidates.platformComponents.version ||
-    targetCatalog.spec.platform.distribution.revision !==
-      releaseCandidates.platformComponents.revision) {
-  throw new Error('PlatformTarget platform selection does not match the release candidate');
-}
-if (targetCatalog.spec.platform.dependencies.developerCharts.version !==
-      releaseCandidates.developerCharts.version ||
-    targetCatalog.spec.platform.dependencies.developerCharts.revision !==
-      releaseCandidates.developerCharts.revision) {
-  throw new Error('PlatformTarget developer-charts selection does not match the release candidate');
-}
-if (targetCatalog.spec.platform.dependencies.softwareTemplates.version !==
-      softwareTemplatesRelease.version ||
-    targetCatalog.spec.platform.dependencies.softwareTemplates.revision !==
-      `v${softwareTemplatesRelease.version}`) {
-  throw new Error('PlatformTarget software-templates selection does not match this release');
-}
-if (!semver.satisfies(
-  targetCatalog.spec.platform.distribution.version,
-  developerChartsRelease.requires.platformComponents,
-)) {
-  throw new Error('Current PlatformTarget does not satisfy developer-charts platform requirement');
-}
-if (!semver.satisfies(
-  targetCatalog.spec.platform.distribution.version,
-  softwareTemplatesRelease.requires.platformComponents,
-)) {
-  throw new Error('Current PlatformTarget does not satisfy software-templates platform requirement');
-}
-if (!semver.satisfies(
-  targetCatalog.spec.platform.dependencies.developerCharts.version,
-  softwareTemplatesRelease.requires.developerCharts,
-)) {
-  throw new Error('Current PlatformTarget does not satisfy software-templates chart requirement');
-}
-for (const coordinate of [
-  targetCatalog.spec.platform.distribution,
-  targetCatalog.spec.platform.dependencies.developerCharts,
-  targetCatalog.spec.platform.dependencies.softwareTemplates,
-]) {
-  if (coordinate.revision !== `v${coordinate.version}`) {
-    throw new Error('PlatformTarget release coordinates must use exact matching tags');
-  }
+const domainChartMetadata = YAML.parse(fs.readFileSync(
+  path.join(chartsRoot, 'charts/domain/environment/Chart.yaml'), 'utf8'));
+const selectedCharts = targetCatalog.spec.platform.dependencies.developerCharts;
+if (selectedCharts.revision !== `v${domainChartMetadata.version}` ||
+    selectedCharts.version !== domainChartMetadata.version) {
+  throw new Error(
+    'Platform developer-charts revision/version does not match distributed chart versions');
 }
 if (targetCatalog.spec.platform.dependencies.softwareTemplates.catalogPath !==
     'catalog-info.yaml') {

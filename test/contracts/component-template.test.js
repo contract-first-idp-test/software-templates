@@ -8,7 +8,7 @@ const source = fs.readFileSync(
   path.join(root, 'templates/component/template.yaml'), 'utf8');
 const template = YAML.parse(source);
 const requiredSteps = [
-  'fetchSystem', 'fetchDomain', 'fetchTarget', 'validateCompatibility', 'resolveBuildProfile',
+  'fetchSystem', 'fetchDomain', 'fetchTarget', 'resolveBuildProfile',
   'fetchApi', 'fetchConsumedApis',
   'resolveApiMetadata', 'fetchConsumedContracts', 'parseConsumedContracts',
   'discoverConsumedOperations', 'renderImplementation', 'renderBase',
@@ -49,11 +49,9 @@ function apiEntity({namespace = 'default', name, group, artifact = name}) {
   };
 }
 
-test('Component has the exact 19-step workflow and one compatibility plus four Roadie actions', () => {
+test('Component has the exact 18-step workflow and four Roadie actions', () => {
   expect(template.spec.steps.map(candidate => candidate.id)).toEqual(requiredSteps);
-  expect(template.spec.steps).toHaveLength(19);
-  expect(step('validateCompatibility').action)
-    .toBe('contract-first-idp:validate-compatibility');
+  expect(template.spec.steps).toHaveLength(18);
   expect(template.spec.steps.filter(candidate =>
     candidate.action.startsWith('roadiehq:')).map(candidate => [
       candidate.id, candidate.action,

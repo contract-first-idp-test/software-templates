@@ -5,9 +5,7 @@
 The platform team first registers one or more Backstage `Resource` entities whose `spec.type` is
 `contract-first-idp-target`. Each authoritative target publishes its runtime configuration under
 `spec.platform`, including the mutable configuration repository and branch, tenant-admission path,
-runtime endpoints, actual dependency versions, and immutable dependency revisions. Templates
-validate those versions against this release's `release.yaml` requirements before generating or
-publishing anything.
+runtime endpoints, and immutable dependency versions. Templates consume the fetched entity directly.
 
 Before running a golden path, verify that the target GitHub organization already exists, the
 CF-IDP GitHub App is installed in it, and the fixed `domain-maintainers`, `domain-contributors`, and
@@ -24,12 +22,11 @@ The golden path:
 1. creates and registers the portable `<domain>-domain` repository;
 2. leaves its `systems/` structure empty and stores no cluster endpoint;
 3. opens one append-only pull request to the selected platform repository containing only
-   `tenants/<domain>/project.yaml` and `tenants/<domain>/admission.yaml` (not a pinned Application).
+   `tenants/<domain>/project.yaml` and `tenants/<domain>/application.yaml`.
 
 Merge that platform pull request. The generic `tenant-admissions` Application creates the
-per-Domain admission project. The platform-owned `tenant-domain-applications` ApplicationSet
-combines the admission descriptor with the current PlatformTarget and generates the parent Application.
-Changing the selected compatible developer-charts tag updates existing Domains automatically. One System discovery
+per-Domain admission project and parent Application. That parent combines Domain policy with the
+target-owned runtime values and renders the Domain chart once. One System discovery
 ApplicationSet is created for every ordered environment.
 
 The Domain repository receives push webhooks for both the Argo CD server and ApplicationSet

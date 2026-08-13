@@ -1,4 +1,0 @@
-admission:
-  name: ${{ values.domainName }}
-  project: tenant-${{ values.domainName }}-admission
-  repositoryUrl: https://${{ values.tenantScmHost }}/${{ values.organization }}/${{ values.repositoryName }}.git

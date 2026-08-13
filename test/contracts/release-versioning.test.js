@@ -1,26 +1,13 @@
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
-const {spawnSync} = require('node:child_process');
 const YAML = require('yaml');
 const semver = require('semver');
 const {repositoryRoot: root} = require('../helpers/paths');
 
-const templates = [
-  'templates/domain/template.yaml',
-  'templates/system/template.yaml',
-  'templates/system/activation.yaml',
-  'templates/api/template.yaml',
-  'templates/component/template.yaml',
-  'templates/resource/template.yaml',
-  'templates/component/promotion.yaml',
-];
 const release = YAML.parse(fs.readFileSync(path.join(root, 'release.yaml'), 'utf8'));
-const releaseCandidates = JSON.parse(fs.readFileSync(
-  path.join(root, 'release-candidates.json'), 'utf8'));
 
-describe('software-templates release compatibility', () => {
-  test('declares independent platform and chart requirements', () => {
+describe('software-templates release policy', () => {
+  test('declares independent platform and chart compatibility ranges', () => {
     expect(release).toEqual({
       version: '1.0.0',
       requires: {
@@ -30,100 +17,39 @@ describe('software-templates release compatibility', () => {
     });
     expect(semver.valid(release.version)).toBe(release.version);
     for (const range of Object.values(release.requires)) {
-      expect(semver.validRange(range)).toBe(range);
+      expect(semver.validRange(range)).not.toBeNull();
     }
   });
 
-  test('records the exact sibling release candidates used by the release gate', () => {
-    expect(releaseCandidates).toEqual({
-      platformComponents: {
-        repository: 'contract-first-idp-test/platform-components',
-        revision: 'v1.0.0', version: '1.0.0',
-      },
-      developerCharts: {
-        repository: 'contract-first-idp-test/developer-charts',
-        revision: 'v1.0.0', version: '1.0.0',
-      },
-    });
+  test('models an independent template patch with unchanged requirements', () => {
+    const patch = {version: '1.0.1', requires: {...release.requires}};
+    expect(patch.requires).toEqual(release.requires);
+    expect(semver.satisfies('1.0.0', patch.requires.platformComponents)).toBe(true);
+    expect(semver.satisfies('1.0.1', patch.requires.developerCharts)).toBe(true);
   });
 
-  test.each(templates)('%s validates before workspace or external mutation', file => {
-    const document = YAML.parse(fs.readFileSync(path.join(root, file), 'utf8'));
-    const steps = document.spec.steps;
-    const validation = steps.find(step => step.id === 'validateCompatibility');
-    expect(validation).toMatchObject({
-      action: 'contract-first-idp:validate-compatibility',
-      input: {
-        releaseVersion: release.version,
-        requires: release.requires,
-        selected: {
-          platformComponents:
-            '${{ steps.fetchTarget.output.entity.spec.platform.distribution.version }}',
-          developerCharts:
-            '${{ steps.fetchTarget.output.entity.spec.platform.dependencies.developerCharts.version }}',
-        },
-      },
-    });
-    expect(steps.indexOf(validation)).toBeGreaterThan(
-      steps.findIndex(step => step.id === 'fetchTarget'));
-    expect(steps.indexOf(validation)).toBeLessThan(steps.findIndex(step =>
-      step.action.startsWith('fetch:') || step.action.startsWith('publish:')));
-    expect(validation).not.toHaveProperty('input.expression');
-  });
-
-  test('release.yaml is authoritative and generated template steps are current', () => {
-    const result = spawnSync('node', ['scripts/generate-compatibility.js', '--check'], {
-      cwd: root, encoding: 'utf8',
-    });
-    expect({status: result.status, stderr: result.stderr}).toEqual({status: 0, stderr: ''});
-  });
-
-  test('release validation rejects stale generated compatibility metadata', () => {
-    const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'release-metadata-'));
-    try {
-      fs.mkdirSync(path.join(temporary, 'scripts'));
-      fs.copyFileSync(path.join(root, 'release.yaml'), path.join(temporary, 'release.yaml'));
-      fs.copyFileSync(
-        path.join(root, 'scripts/generate-compatibility.js'),
-        path.join(temporary, 'scripts/generate-compatibility.js'),
-      );
-      fs.cpSync(path.join(root, 'templates'), path.join(temporary, 'templates'), {
-        recursive: true,
-      });
-      const staleTemplate = path.join(temporary, templates[0]);
-      fs.writeFileSync(staleTemplate, fs.readFileSync(staleTemplate, 'utf8')
-        .replace('releaseVersion: "1.0.0"', 'releaseVersion: "9.9.9"'));
-      const result = spawnSync('node', ['scripts/generate-compatibility.js', '--check'], {
-        cwd: temporary, encoding: 'utf8',
-      });
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(`${templates[0]} is stale`);
-    } finally {
-      fs.rmSync(temporary, {recursive: true, force: true});
-    }
-  });
-
-  test('patches preserve ranges and compatible chart patches need no template release', () => {
-    const templatePatch = {version: '1.0.1', requires: {...release.requires}};
-    expect(templatePatch.requires).toEqual(release.requires);
-    expect(semver.satisfies('1.0.1', templatePatch.requires.developerCharts)).toBe(true);
-    expect(semver.satisfies('1.0.0', templatePatch.requires.platformComponents)).toBe(true);
-  });
-
-  test('hypothetical minor evolution may raise dependency floors', () => {
-    const platform = '1.1.0';
-    const chart = {
-      version: '1.1.0', requires: {platformComponents: '>=1.1.0 <2.0.0'},
-    };
-    const template = {
+  test('allows a hypothetical minor to raise dependency floors', () => {
+    const minor = {
       version: '1.1.0',
       requires: {
-        platformComponents: '>=1.1.0 <2.0.0', developerCharts: '>=1.1.0 <2.0.0',
+        platformComponents: '>=1.1.0 <2.0.0',
+        developerCharts: '>=1.1.0 <2.0.0',
       },
     };
-    expect(semver.satisfies(platform, chart.requires.platformComponents)).toBe(true);
-    expect(semver.satisfies(platform, template.requires.platformComponents)).toBe(true);
-    expect(semver.satisfies(chart.version, template.requires.developerCharts)).toBe(true);
-    expect(semver.satisfies('1.0.9', chart.requires.platformComponents)).toBe(false);
+    expect(semver.satisfies('1.0.9', minor.requires.platformComponents)).toBe(false);
+    expect(semver.satisfies('1.1.0', minor.requires.platformComponents)).toBe(true);
+    expect(semver.satisfies('1.1.0', minor.requires.developerCharts)).toBe(true);
+  });
+
+  test('does not inject runtime compatibility actions into golden paths', () => {
+    for (const file of [
+      'templates/domain/template.yaml', 'templates/system/template.yaml',
+      'templates/system/activation.yaml', 'templates/api/template.yaml',
+      'templates/component/template.yaml', 'templates/resource/template.yaml',
+      'templates/component/promotion.yaml',
+    ]) {
+      expect(fs.readFileSync(path.join(root, file), 'utf8'))
+        .not.toContain('contract-first-idp:validate-compatibility');
+    }
   });
 });

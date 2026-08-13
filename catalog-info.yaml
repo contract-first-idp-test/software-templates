@@ -3,8 +3,6 @@ kind: Location
 metadata:
   name: contract-first-idp-software-templates
   description: Contract-first golden path templates
-  annotations:
-    contract-first-idp.github.io/release-version: 1.0.0
 spec:
   type: url
   targets:

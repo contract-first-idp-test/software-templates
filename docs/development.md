@@ -98,9 +98,8 @@ Verify the configured released revision separately:
 npm run --prefix test test:remote-revision
 ```
 
-When publishing a release, update `release.yaml`, keep patch dependency ranges unchanged, and
-create a new immutable exact tag. Update a PlatformTarget's selected template or chart coordinate
-only when intentionally adopting that release. Do not move an existing tag.
+When publishing the next coordinated release, create a new immutable tag, update the platform
+contract to it, and let the remote check consume that declaration. Do not move an existing tag.
 
 Helm implementation behavior belongs in `developer-charts`; this repository verifies the producer
 side of the shared contract.
