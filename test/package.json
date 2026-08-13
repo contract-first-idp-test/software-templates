@@ -3,6 +3,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
+    "release:validate": "node ../scripts/validate-release.js",
     "generate:compatibility": "node ../scripts/generate-compatibility.js",
     "check:compatibility": "node ../scripts/generate-compatibility.js --check",
     "test": "jest --runInBand --config jest.config.js",

@@ -1,0 +1,12 @@
+{
+  "platformComponents": {
+    "repository": "contract-first-idp-test/platform-components",
+    "revision": "v1.0.0",
+    "version": "1.0.0"
+  },
+  "developerCharts": {
+    "repository": "contract-first-idp-test/developer-charts",
+    "revision": "v1.0.0",
+    "version": "1.0.0"
+  }
+}

@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -14,6 +15,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -23,6 +26,27 @@ jobs:
         run: |
           node --version
           npm --version
+      - name: Read exact release candidates
+        if: github.ref_type == 'tag'
+        id: candidates
+        run: |
+          node -e "const c=require('./release-candidates.json'); console.log('platform_repository=' + c.platformComponents.repository); console.log('platform_revision=' + c.platformComponents.revision); console.log('charts_repository=' + c.developerCharts.repository); console.log('charts_revision=' + c.developerCharts.revision)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: github.ref_type == 'tag'
+        with:
+          repository: ${{ steps.candidates.outputs.platform_repository }}
+          ref: ${{ steps.candidates.outputs.platform_revision }}
+          path: dependencies/platform-components
+      - uses: actions/checkout@v4
+        if: github.ref_type == 'tag'
+        with:
+          repository: ${{ steps.candidates.outputs.charts_repository }}
+          ref: ${{ steps.candidates.outputs.charts_revision }}
+          path: dependencies/developer-charts
       - name: Run deterministic tests
+        if: github.ref_type != 'tag'
         run: make test
+      - name: Validate immutable release tag and exact sibling candidates
+        if: github.ref_type == 'tag'
+        run: make release-check DEVELOPER_CHARTS_DIR=dependencies/developer-charts PLATFORM_COMPONENTS_DIR=dependencies/platform-components
       - run: git diff --check

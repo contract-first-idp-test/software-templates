@@ -1,38 +1,49 @@
-# Release and compatibility
+# Release and compatibility model
 
-Contract-First IDP repositories version their own contracts independently:
+The repositories remain independently versioned:
 
 ```text
 software-templates -> developer-charts -> platform-components
 software-templates ----------------------> platform-components
 ```
 
-Software Templates owns the developer-facing golden paths and generated repository structures.
-Its root `release.yaml` declares compatible platform-components and developer-charts ranges. A
-patch repairs forms, expressions, validation, generated documentation, or presentation without
-changing those ranges. A minor may add a golden-path capability and raise dependency floors. A
-major denotes an incompatible generated-repository or lifecycle contract requiring migration.
-
-Every golden path resolves its PlatformTarget, then runs one narrow
-`contract-first-idp:validate-compatibility` action before any workspace render, repository
-publication, or pull request. The action uses the standard `node-semver` package. The seven action
-steps are generated from authoritative root `release.yaml` by
-`node scripts/generate-compatibility.js`; tests fail if checked-in templates are stale. There is no
-second hand-written runtime interpretation of SemVer.
-
-Ranges state compatibility; tags select code. For example:
+`software-templates` owns the developer-facing golden paths and generated repository structures.
+Root `release.yaml` is authoritative:
 
 ```yaml
+version: 1.0.0
 requires:
-  platformComponents: ">=1.1.0 <2.0.0"
-  developerCharts: ">=1.0.0 <1.1.0"
+  platformComponents: ">=1.0.0 <2.0.0"
+  developerCharts: ">=1.0.0 <2.0.0"
 ```
 
-accepts chart patch `1.0.9`, but a PlatformTarget still pins one exact revision such as `v1.0.2`.
-Developer Hub likewise discovers this repository through an exact tag such as `v1.1.0`.
+Every golden path fetches the PlatformTarget and runs
+`contract-first-idp:validate-compatibility` before rendering a workspace, creating a repository,
+or opening a pull request. The action and release validator use `node-semver`. Compatibility steps
+are generated from `release.yaml`; stale generated steps fail the release gate.
 
-An installation can independently run platform-components 1.1.3, developer-charts 1.0.4, and
-software-templates 1.1.2. A template-only `1.1.3` patch keeps both ranges and requires only a
-configuration selection change—no platform
-or chart release. An additive sequence may instead introduce platform-components 1.2.0, then
-developer-charts 1.1.0 requiring it, then software-templates 1.2.0 requiring both new capabilities.
+A patch fixes implementation behavior and must preserve both ranges exactly. A minor adds capability
+and may raise either dependency minimum. A major is an incompatible golden-path or generated
+repository contract change. A patch release in one repository does not require a release in another
+repository when the existing compatibility ranges already include it.
+
+`release-candidates.json` records the exact sibling revisions used by the cross-repository release
+proof; it does not replace the compatibility ranges. The first release checks all three `1.0.0`
+candidates together. Future scenarios such as independent `1.0.1` patches or additive `1.1.0`
+capabilities remain test fixtures until real releases are intentionally cut.
+
+## Release procedure
+
+1. Decide this repository's SemVer from changes to its golden-path contract.
+2. Update `release.yaml`.
+3. Run `npm run --prefix test generate:compatibility` to refresh derived steps.
+4. Update `release-candidates.json` to the exact sibling candidates under test.
+5. Run `make release-check`, which includes the full suite and cross-repository compatibility.
+6. Commit and push the verified release candidate.
+7. Create and push the exact `vX.Y.Z` tag.
+8. Verify the tag-triggered GitHub Actions gate.
+9. Update platform configuration to the desired exact compatible template tag.
+
+The gate rejects tag/version mismatch, non-monotonic versions, patch dependency changes, stale
+generated compatibility steps, incompatible sibling candidates, and stale exact candidate
+selections.

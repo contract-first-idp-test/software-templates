@@ -49,9 +49,9 @@ To onboard a tenant, follow [Getting started](docs/getting-started.md).
 This software-templates release is independently versioned and requires:
 
 ```text
-software-templates:  1.1.1 (exact release tag and workshop selection v1.1.1)
-platform-components: >=1.1.0 <2.0.0
-developer-charts:    >=1.0.0 <1.1.0
+software-templates:  1.0.0 (exact release tag and workshop selection v1.0.0)
+platform-components: >=1.0.0 <2.0.0
+developer-charts:    >=1.0.0 <2.0.0
 ```
 
 The PlatformTarget records exact immutable revisions and actual versions. Compatibility ranges do

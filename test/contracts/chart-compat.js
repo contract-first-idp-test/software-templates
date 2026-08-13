@@ -74,8 +74,41 @@ const tenantCatalog = YAML.parse(environment.renderString(catalogSource, {values
 const targetCatalog = YAML.parse(fs.readFileSync(targetPath, 'utf8'));
 const softwareTemplatesRelease = YAML.parse(fs.readFileSync(
   path.join(root, 'release.yaml'), 'utf8'));
+const releaseCandidates = JSON.parse(fs.readFileSync(
+  path.join(root, 'release-candidates.json'), 'utf8'));
+const platformComponentsRelease = YAML.parse(fs.readFileSync(
+  path.join(platformRoot, 'release.yaml'), 'utf8'));
 const developerChartsRelease = YAML.parse(fs.readFileSync(
   path.join(chartsRoot, 'release.yaml'), 'utf8'));
+for (const [name, candidate] of Object.entries(releaseCandidates)) {
+  if (candidate.revision !== `v${candidate.version}`) {
+    throw new Error(`${name} release candidate must use the exact matching tag`);
+  }
+}
+if (platformComponentsRelease.version !== releaseCandidates.platformComponents.version) {
+  throw new Error('Checked-out platform-components does not match release-candidates.json');
+}
+if (developerChartsRelease.version !== releaseCandidates.developerCharts.version) {
+  throw new Error('Checked-out developer-charts does not match release-candidates.json');
+}
+if (targetCatalog.spec.platform.distribution.version !==
+      releaseCandidates.platformComponents.version ||
+    targetCatalog.spec.platform.distribution.revision !==
+      releaseCandidates.platformComponents.revision) {
+  throw new Error('PlatformTarget platform selection does not match the release candidate');
+}
+if (targetCatalog.spec.platform.dependencies.developerCharts.version !==
+      releaseCandidates.developerCharts.version ||
+    targetCatalog.spec.platform.dependencies.developerCharts.revision !==
+      releaseCandidates.developerCharts.revision) {
+  throw new Error('PlatformTarget developer-charts selection does not match the release candidate');
+}
+if (targetCatalog.spec.platform.dependencies.softwareTemplates.version !==
+      softwareTemplatesRelease.version ||
+    targetCatalog.spec.platform.dependencies.softwareTemplates.revision !==
+      `v${softwareTemplatesRelease.version}`) {
+  throw new Error('PlatformTarget software-templates selection does not match this release');
+}
 if (!semver.satisfies(
   targetCatalog.spec.platform.distribution.version,
   developerChartsRelease.requires.platformComponents,
