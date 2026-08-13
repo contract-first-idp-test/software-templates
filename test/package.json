@@ -3,6 +3,8 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
+    "generate:compatibility": "node ../scripts/generate-compatibility.js",
+    "check:compatibility": "node ../scripts/generate-compatibility.js --check",
     "test": "jest --runInBand --config jest.config.js",
     "test:contracts": "jest --runInBand --config jest.config.js contracts",
     "test:skeletons": "jest --runInBand --config jest.config.js skeletons",

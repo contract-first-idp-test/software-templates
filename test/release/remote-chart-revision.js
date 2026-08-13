@@ -8,7 +8,7 @@ const {repositoryRoot: root} = require('../helpers/paths');
 const platformRoot = path.resolve(
   root, process.env.PLATFORM_COMPONENTS_DIR || '../platform-components');
 const target = YAML.parse(fs.readFileSync(
-  path.join(platformRoot, 'catalog-info.yaml'), 'utf8'));
+  path.join(platformRoot, 'configuration/catalog-info.yaml'), 'utf8'));
 const dependency = target.spec.platform.dependencies.developerCharts;
 const charts = target.spec.platform.charts;
 const requiredCharts = [

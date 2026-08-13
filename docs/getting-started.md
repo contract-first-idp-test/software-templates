@@ -24,11 +24,12 @@ The golden path:
 1. creates and registers the portable `<domain>-domain` repository;
 2. leaves its `systems/` structure empty and stores no cluster endpoint;
 3. opens one append-only pull request to the selected platform repository containing only
-   `tenants/<domain>/project.yaml` and `tenants/<domain>/application.yaml`.
+   `tenants/<domain>/project.yaml` and `tenants/<domain>/admission.yaml` (not a pinned Application).
 
 Merge that platform pull request. The generic `tenant-admissions` Application creates the
-per-Domain admission project and parent Application. That parent combines Domain policy with the
-target-owned runtime values and renders the Domain chart once. One System discovery
+per-Domain admission project. The platform-owned `tenant-domain-applications` ApplicationSet
+combines the admission descriptor with the current PlatformTarget and generates the parent Application.
+Changing the selected compatible developer-charts tag updates existing Domains automatically. One System discovery
 ApplicationSet is created for every ordered environment.
 
 The Domain repository receives push webhooks for both the Argo CD server and ApplicationSet

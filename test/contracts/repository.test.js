@@ -21,6 +21,7 @@ const supportedActions = new Set([
   'publish:github',
   'publish:github:pull-request',
   'github:webhook',
+  'contract-first-idp:validate-compatibility',
   'roadiehq:utils:jsonata',
   'roadiehq:utils:fs:write',
   'roadiehq:utils:fs:parse',

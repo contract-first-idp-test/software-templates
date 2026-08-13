@@ -61,24 +61,15 @@ spec:
         defaultNamespace: default
     - id: validateCompatibility
       name: Validate platform compatibility
-      action: roadiehq:utils:jsonata
+      action: contract-first-idp:validate-compatibility
       input:
-        data:
-          platformVersion: ${{ steps.fetchTarget.output.entity.spec.platform.distribution.version }}
-          developerChartsVersion: ${{ steps.fetchTarget.output.entity.spec.platform.dependencies.developerCharts.version }}
-        expression: |
-          (
-            $parts := function($v) { $map($split($v, "."), function($n) { $number($n) }) };
-            $gte := function($a, $b) { $a[0] > $b[0] or ($a[0] = $b[0] and ($a[1] > $b[1] or ($a[1] = $b[1] and $a[2] >= $b[2]))) };
-            $lt := function($a, $b) { $a[0] < $b[0] or ($a[0] = $b[0] and ($a[1] < $b[1] or ($a[1] = $b[1] and $a[2] < $b[2]))) };
-            $platform := $parts(platformVersion);
-            $charts := $parts(developerChartsVersion);
-            $not($gte($platform, [1, 1, 0]) and $lt($platform, [2, 0, 0]))
-              ? $error("This software-templates 1.1.1 release requires platform-components >=1.1.0 <2.0.0. The selected Platform Target provides platform-components " & platformVersion & ". Upgrade the Platform Target or use a compatible software-templates release.")
-              : $not($gte($charts, [1, 0, 0]) and $lt($charts, [1, 1, 0]))
-              ? $error("This software-templates 1.1.1 release requires developer-charts >=1.0.0 <1.1.0. The selected Platform Target provides developer-charts " & developerChartsVersion & ". Upgrade the Platform Target or use a compatible software-templates release.")
-              : {"compatible": true}
-          )
+        releaseVersion: "1.1.1"
+        requires:
+          platformComponents: ">=1.1.0 <2.0.0"
+          developerCharts: ">=1.0.0 <1.1.0"
+        selected:
+          platformComponents: ${{ steps.fetchTarget.output.entity.spec.platform.distribution.version }}
+          developerCharts: ${{ steps.fetchTarget.output.entity.spec.platform.dependencies.developerCharts.version }}
     - id: renderResourceBase
       name: Render Resource repository
       action: fetch:template

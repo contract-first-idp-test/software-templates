@@ -25,6 +25,8 @@ test('live Backstage dry-run creates a Domain repository', async () => {
     .toHaveLength(0);
   expect(generatedFiles).toEqual(expect.arrayContaining([
     'platform-pr/tenants/cf-idp-tenant/project.yaml',
-    'platform-pr/tenants/cf-idp-tenant/application.yaml',
+    'platform-pr/tenants/cf-idp-tenant/admission.yaml',
   ]));
+  expect(generatedFiles).not.toContain(
+    'platform-pr/tenants/cf-idp-tenant/application.yaml');
 }, 15000);

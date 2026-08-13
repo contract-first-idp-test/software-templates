@@ -17,7 +17,7 @@ if (!fs.existsSync(path.join(chartsRoot, 'charts/domain/environment/Chart.yaml')
 }
 const platformRoot = path.resolve(
   root, process.env.PLATFORM_COMPONENTS_DIR || '../platform-components');
-const targetPath = path.join(platformRoot, 'catalog-info.yaml');
+const targetPath = path.join(platformRoot, 'configuration/catalog-info.yaml');
 if (!fs.existsSync(targetPath)) {
   console.error(`Workshop target catalog does not exist: ${targetPath}`);
   process.exit(2);

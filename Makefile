@@ -1,8 +1,11 @@
 SHELL := /usr/bin/env bash
-.PHONY: test test-install test-clean
+.PHONY: test generate-release-metadata test-install test-clean
 
-test: test-install
+test: generate-release-metadata test-install
 	npm test --prefix test
+
+generate-release-metadata:
+	node scripts/generate-compatibility.js --check
 
 test-install:
 	npm ci --prefix test --loglevel=error

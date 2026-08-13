@@ -49,14 +49,15 @@ function apiEntity({namespace = 'default', name, group, artifact = name}) {
   };
 }
 
-test('Component has the exact 19-step workflow and five Roadie actions', () => {
+test('Component has the exact 19-step workflow and one compatibility plus four Roadie actions', () => {
   expect(template.spec.steps.map(candidate => candidate.id)).toEqual(requiredSteps);
   expect(template.spec.steps).toHaveLength(19);
+  expect(step('validateCompatibility').action)
+    .toBe('contract-first-idp:validate-compatibility');
   expect(template.spec.steps.filter(candidate =>
     candidate.action.startsWith('roadiehq:')).map(candidate => [
       candidate.id, candidate.action,
   ])).toEqual([
-    ['validateCompatibility', 'roadiehq:utils:jsonata'],
     ['resolveBuildProfile', 'roadiehq:utils:jsonata'],
     ['resolveApiMetadata', 'roadiehq:utils:jsonata'],
     ['parseConsumedContracts', 'roadiehq:utils:fs:parse'],

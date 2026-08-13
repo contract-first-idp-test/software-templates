@@ -49,7 +49,7 @@ To onboard a tenant, follow [Getting started](docs/getting-started.md).
 This software-templates release is independently versioned and requires:
 
 ```text
-software-templates:  1.1.1 (exact release tag v1.1.1; workshop selection v1.1.0)
+software-templates:  1.1.1 (exact release tag and workshop selection v1.1.1)
 platform-components: >=1.1.0 <2.0.0
 developer-charts:    >=1.0.0 <1.1.0
 ```

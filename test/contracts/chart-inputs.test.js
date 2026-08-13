@@ -15,7 +15,7 @@ describe('template-to-chart inputs', () => {
       expect(templateSource).not.toContain('parseTargetValues');
     }
     expect(read('templates/domain/template.yaml'))
-      .toContain('roadiehq:utils:jsonata');
+      .toContain('contract-first-idp:validate-compatibility');
   });
 
   it('keeps tenant policy portable and target values trusted', () => {
@@ -26,13 +26,9 @@ describe('template-to-chart inputs', () => {
     ]) expect(catalog).not.toContain(forbidden);
     expect(catalog).toContain('platformTarget: ${{ values.platformTarget }}');
 
-    const application = read('skeletons/domain/platform-admission/application.yaml');
-    expect(application).toContain('path: charts/domain/environment');
-    expect(application).toContain('targetRevision: ${{ values.developerChartsRevision }}');
-    expect(application).toContain('$domain/catalog-info.yaml');
-    expect(application).toContain('$platform/${{ values.platformTargetValuesPath }}');
-    expect(application.indexOf('$platform/${{ values.platformTargetValuesPath }}'))
-      .toBeLessThan(application.indexOf('$domain/catalog-info.yaml'));
+    const admission = read('skeletons/domain/platform-admission/admission.yaml');
+    expect(admission).toContain('repositoryUrl:');
+    expect(admission).not.toContain('targetRevision:');
   });
 
   it('generates immutable release and resource-profile inputs unchanged', () => {

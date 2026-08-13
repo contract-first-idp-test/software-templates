@@ -34,10 +34,9 @@ describe('portable Domain and admission contracts', () => {
     expect(template.spec.steps.filter(step => step.id === 'renderAdmission')).toHaveLength(1);
     expect(template.spec.steps.find(step => step.id === 'fetchTargetValues')).toBeUndefined();
     expect(template.spec.steps.find(step => step.id === 'parseTargetValues')).toBeUndefined();
-    expect(template.spec.steps.filter(step => step.action?.startsWith('roadiehq:')))
-      .toEqual([expect.objectContaining({
-        id: 'validateCompatibility', action: 'roadiehq:utils:jsonata',
-      })]);
+    expect(template.spec.steps.find(step => step.id === 'validateCompatibility')).toMatchObject({
+      action: 'contract-first-idp:validate-compatibility',
+    });
     expect(template.spec.steps.find(step => step.id === 'renderAdmission').input.targetPath)
       .toContain('spec.platform.tenantAdmission.path');
     expect(template.spec.steps.find(step => step.id === 'platformPr').action)
@@ -46,9 +45,8 @@ describe('portable Domain and admission contracts', () => {
       .toContain('spec.platform.tenantAdmission.branch');
   });
 
-  it('generates a self-contained exact three-repository admission pair', () => {
+  it('generates a self-contained admission record for platform-owned Application generation', () => {
     const project = read('skeletons/domain/platform-admission/project.yaml');
-    const application = read('skeletons/domain/platform-admission/application.yaml');
     expect((project.match(/^    - /gm) || []).length).toBeGreaterThanOrEqual(3);
     expect(project).toContain('${{ values.developerChartsRepositoryUrl }}');
     expect(project).toContain('${{ values.repositoryName }}.git');
@@ -56,10 +54,10 @@ describe('portable Domain and admission contracts', () => {
     expect(project).toContain('kind: KeycloakOIDCClient');
     expect(project).not.toMatch(/group: ["']?\*["']?|kind: ["']?\*["']?/);
     expect(project).toContain('${{ values.platformRepositoryName }}.git');
-    expect(application).toContain('$domain/catalog-info.yaml');
-    expect(application).toContain('$platform/${{ values.platformTargetValuesPath }}');
-    expect(application.indexOf('$platform/${{ values.platformTargetValuesPath }}'))
-      .toBeLessThan(application.indexOf('$domain/catalog-info.yaml'));
-    expect(application).toContain('targetRevision: ${{ values.developerChartsRevision }}');
+    const admission = read('skeletons/domain/platform-admission/admission.yaml');
+    expect(admission).toContain('name: ${{ values.domainName }}');
+    expect(admission).toContain('repositoryUrl: https://${{ values.tenantScmHost }}');
+    expect(fs.existsSync(path.join(
+      root, 'skeletons/domain/platform-admission/application.yaml'))).toBe(false);
   });
 });
