@@ -17,13 +17,13 @@ spec:
   lifecycle: production
   owner: ${{ values.owner }}
   system: ${{ values.systemRef }}
-{% if values.implementsApi %}
+{%- if values.implementsApi %}
   providesApis:
     - ${{ values.apiRef }}
-{% endif %}
-{% if values.consumed_apis | length > 0 %}
+{%- endif %}
+{%- if values.consumed_apis | length > 0 %}
   consumesApis:
-{% for api in values.consumed_apis %}
+{%- for api in values.consumed_apis %}
     - ${{ api.ref }}
-{% endfor %}
-{% endif %}
+{%- endfor %}
+{%- endif %}

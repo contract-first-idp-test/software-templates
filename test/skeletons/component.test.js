@@ -117,6 +117,44 @@ describe('Component implementation profiles', () => {
   });
 });
 
+test.each(Object.entries(scenarios))(
+  'Component base renders clean catalog metadata for %s API selection',
+  async (scenario, selection) => {
+    const destination = await fs.mkdtemp(path.join(os.tmpdir(), 'component-base-'));
+    try {
+      await renderDirectory({
+        source: path.join(root, 'skeletons/component/base'),
+        destination,
+        values: {
+          componentName: 'registry-verification',
+          description: 'Hermetic Apicurio Registry verification',
+          scmProvider: 'github',
+          scmHost: 'github.com',
+          domainOrg: 'contract-first-idp',
+          domainRepo: 'storefront-domain',
+          repositoryName: 'registry-verification',
+          implementationProfile: 'spring-boot-openapi',
+          buildProfile: 'spring-boot',
+          owner: 'group:default/domain-maintainers',
+          systemRef: 'system:cf-idp-integration-tests/storefront',
+          schemaRegistryApiUrl: 'https://apicurio.invalid/apis/registry/v3',
+          implementsApi: Boolean(selection.provided_api),
+          apiRef: selection.provided_api?.ref || '',
+          ...selection,
+        },
+      });
+      const catalog = YAML.parse(await fs.readFile(
+        path.join(destination, 'catalog-info.yaml'), 'utf8'));
+      expect(catalog.spec.providesApis || []).toHaveLength(
+        selection.provided_api ? 1 : 0,
+      );
+      expect(catalog.spec.consumesApis || []).toHaveLength(selection.consumed_apis.length);
+    } finally {
+      await fs.rm(destination, {recursive: true, force: true});
+    }
+  },
+);
+
 test('Component desired-state base includes values and the initial build release', async () => {
   const destination = await fs.mkdtemp(path.join(os.tmpdir(), 'component-desired-state-'));
   try {

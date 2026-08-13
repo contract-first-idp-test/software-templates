@@ -89,7 +89,7 @@ catalog wiring and can retrieve a selected contract through the generated Regist
 for repeatable builds. Missing Registry artifacts fail the build without falling back to Git or
 catalog content.
 
-{% if values.provided_api %}
+{%- if values.provided_api %}
 ## Provided API
 
 | Attribute | Value |
@@ -99,12 +99,12 @@ catalog content.
 | Registry artifact | `${{ values.provided_api.registry_artifact_id }}` |
 | Selected version | `${{ values.provided_api.version }}` |
 | Local contract | `target/generated-resources/openapi/${{ values.provided_api.contract_file }}` |
-{% endif %}
+{%- endif %}
 
 ## Consumed APIs
 
-{% if values.consumed_apis | length > 0 %}
-{% for api in values.consumed_apis %}
+{%- if values.consumed_apis | length > 0 %}
+{%- for api in values.consumed_apis %}
 ### `${{ api.ref }}`
 
 | Attribute | Value |
@@ -115,18 +115,18 @@ catalog content.
 | Local contract | `target/generated-resources/openapi/${{ api.contract_file }}` |
 | Default host property | `openapi.client.${{ api.alias }}.host=http://${{ api.name }}:8080` |
 
-{% if api.operations | length > 0 %}
+{%- if api.operations | length > 0 %}
 Generated operation entry points:
 
-{% for operation in api.operations %}
+{%- for operation in api.operations %}
 - `${{ operation.method | upper }} ${{ operation.path }}` routes to
   `direct:${{ api.alias }}.${{ operation.operation_id }}`
-{% endfor %}
-{% else %}
+{%- endfor %}
+{%- else %}
 No operation-specific routes were generated. Use the contract's operation IDs when adding routes.
-{% endif %}
+{%- endif %}
 
-{% endfor %}
-{% else %}
+{%- endfor %}
+{%- else %}
 This Component does not currently consume an API.
-{% endif %}
+{%- endif %}
