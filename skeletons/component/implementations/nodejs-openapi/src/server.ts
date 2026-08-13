@@ -1,11 +1,13 @@
-import addFormats from 'ajv-formats';
+import addFormatsModule, {type FormatsPlugin} from 'ajv-formats';
 import express, {type Request, type Response} from 'express';
-import {OpenAPIBackend, type Context} from 'openapi-backend';
+import {OpenAPIBackend, type Context, type Request as OpenAPIRequest} from 'openapi-backend';
 import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 
 import {handlers} from './handlers.js';
 import {openapiRuntime} from './generated/runtime-config.js';
+
+const addFormats = addFormatsModule as unknown as FormatsPlugin;
 
 function firstSuccessStatus(operation: {responses?: Record<string, unknown>} | undefined) {
   const statuses = Object.keys(operation?.responses ?? {})
@@ -51,7 +53,7 @@ export async function createApp() {
     methodNotAllowed: (_context: Context, _req: Request, res: Response) =>
       res.status(405).json({error: 'method not allowed'}),
     notImplemented: (context: Context) => {
-      const {status, mock} = context.api.mockResponseForOperation(context.operation.operationId);
+      const {status, mock} = context.api.mockResponseForOperation(context.operation.operationId!);
       return {__cfidpMockResponse: true, status, body: mock};
     },
     postResponseHandler: (context: Context, _req: Request, res: Response) => {
@@ -77,7 +79,8 @@ export async function createApp() {
   });
 
   await api.init();
-  app.use((req: Request, res: Response) => api.handleRequest(req, req, res));
+  app.use((req: Request, res: Response) =>
+    api.handleRequest(req as unknown as OpenAPIRequest, req, res));
   return app;
 }
 

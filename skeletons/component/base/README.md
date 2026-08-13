@@ -60,6 +60,13 @@ Java profiles provide the Maven wrapper (`./mvnw test`); the Node.js profile use
 commands (`npm ci && npm test`). The `.devfile.yaml` provides the matching editor and workspace
 entrypoint.
 
+{%- if values.implementationProfile == 'nodejs-openapi' %}
+The Node.js service uses Express and `openapi-backend` for HTTP routing and contract validation,
+`openapi-client-axios` for generated typed consumers, `openapicmd` for TypeScript type generation,
+and the built-in `node:test` runner. `npm test` generates contracts and types, compiles the project,
+and runs the compiled tests.
+{%- endif %}
+
 ## Runtime Configuration
 
 Runtime configuration is owned in the parent System repository:
@@ -75,9 +82,8 @@ artifact selection.
 
 ## API Dependencies
 
-Java implementations download selected contracts from the Schema Registry during Maven
-`initialize` and write them under `target/generated-resources/openapi`. Node.js keeps the same
-catalog wiring and can retrieve a selected contract through the generated Registry content URL.
+The generated build configuration records each selected contract and downloads it from the Schema
+Registry. The selection behavior is the same across implementation profiles:
 
 | Selection | Build behavior |
 | --- | --- |
@@ -89,6 +95,15 @@ catalog wiring and can retrieve a selected contract through the generated Regist
 for repeatable builds. Missing Registry artifacts fail the build without falling back to Git or
 catalog content.
 
+{%- if values.implementationProfile == 'nodejs-openapi' %}
+Node.js builds download contracts into `contracts/`. `openapicmd` generates the provided API's
+server types and each consumed API's client types under `src/generated/`; generated typed client
+factories live in `src/generated/clients.ts`.
+{%- else %}
+Java builds download contracts during Maven `initialize` and write them under
+`target/generated-resources/openapi`.
+{%- endif %}
+
 {%- if values.provided_api %}
 ## Provided API
 
@@ -98,7 +113,12 @@ catalog content.
 | Registry group | `${{ values.provided_api.registry_group_id }}` |
 | Registry artifact | `${{ values.provided_api.registry_artifact_id }}` |
 | Selected version | `${{ values.provided_api.version }}` |
+{%- if values.implementationProfile == 'nodejs-openapi' %}
+| Local contract | `contracts/provided-api.yaml` |
+| Generated types | `src/generated/provided-api.d.ts` |
+{%- else %}
 | Local contract | `target/generated-resources/openapi/${{ values.provided_api.contract_file }}` |
+{%- endif %}
 {%- endif %}
 
 ## Consumed APIs
@@ -112,9 +132,17 @@ catalog content.
 | Registry group | `${{ api.registry_group_id }}` |
 | Registry artifact | `${{ api.registry_artifact_id }}` |
 | Selected version | `${{ api.version }}` |
+{%- if values.implementationProfile == 'nodejs-openapi' %}
+| Local contract | `contracts/${{ api.alias }}.yaml` |
+| Generated client types | `src/generated/clients/${{ api.alias }}.d.ts` |
+| Runtime URL override | `OPENAPI_CLIENT_${{ api.alias | upper | replace('-', '_') }}_URL` |
+| Generated default URL | `http://${{ api.name }}:8080` |
+{%- else %}
 | Local contract | `target/generated-resources/openapi/${{ api.contract_file }}` |
 | Default host property | `openapi.client.${{ api.alias }}.host=http://${{ api.name }}:8080` |
+{%- endif %}
 
+{%- if values.implementationProfile != 'nodejs-openapi' %}
 {%- if api.operations | length > 0 %}
 Generated operation entry points:
 
@@ -125,8 +153,13 @@ Generated operation entry points:
 {%- else %}
 No operation-specific routes were generated. Use the contract's operation IDs when adding routes.
 {%- endif %}
+{%- endif %}
 
 {%- endfor %}
 {%- else %}
 This Component does not currently consume an API.
 {%- endif %}
+
+Cross-System contract consumption is supported in v1. Runtime endpoint resolution is owned by
+environment configuration and may override the generated default shown above. CF-IDP does not
+automatically discover runtime endpoints from catalog or contract metadata.

@@ -13,4 +13,4 @@ commands:
   - id: test
     exec: {component: tools, commandLine: npm ci && npm test, workingDir: /projects/${{ values.component_id }}}
   - id: run
-    exec: {component: tools, commandLine: npm start, workingDir: /projects/${{ values.component_id }}}
+    exec: {component: tools, commandLine: npm ci && npm run build && npm start, workingDir: /projects/${{ values.component_id }}}

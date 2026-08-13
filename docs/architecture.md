@@ -34,7 +34,7 @@ documentation and UI must make that transition visible.
 | Decision | Rationale |
 | --- | --- |
 | Use Git as the handoff | Backstage should capture intent and finish after creating a reviewable SCM change, not remain connected while several platform controllers complete their work. Git outlives the scaffolder task, provides audit and approval history, and lets reconciliation resume after transient failures. Backstage completion therefore confirms the Git change, not runtime readiness. |
-| Keep API contracts independent | A contract is a product shared by providers and consumers, not an implementation detail of either side. Giving it a repository and release history allows parallel development, independent compatibility review, and explicit floating or immutable version selection. Backstage relationships remain unversioned, while `api-dependencies.yaml` records the versions a Component actually selected. |
+| Keep API contracts independent | A contract is a product shared by providers and consumers, not an implementation detail of either side. Giving it a repository and release history allows parallel development, independent compatibility review, and explicit floating or immutable version selection. Backstage relationships remain unversioned, while each generated build configuration records the versions a Component selected. |
 | Derive child ownership and SCM identity from the Domain | The Domain establishes the organization, repository host, and lifecycle for the tenant. Every tenant entity is owned by `group:default/domain-maintainers`, and repositories use the fixed organization teams. Reusing that information removes repetitive form choices and prevents a child entity from acquiring contradictory ownership or publishing outside the tenant's SCM scope. Moving an entity elsewhere is treated as an administrative migration rather than an ordinary golden-path option. |
 | Encode lifecycle changes as small files | System activation, Component environment activation and release selection, and Resource provisioning are easier to review when each has one narrow file. ApplicationSets discover activation files directly; optional Component release files are merged into the already active Component Application. The paths remain a versioned, tested contract. |
 | Keep release overlays artifact-only | A release file answers one question: which versioned artifact should run in this environment. Runtime configuration remains in common and environment values, so promotion cannot unexpectedly alter replicas, Routes, health checks, or Secret references. Rollback selects an older release without reverting unrelated configuration. |
@@ -58,7 +58,8 @@ flowchart TD
 A Domain is the tenant and lifecycle authority. Systems group application capabilities inside that
 Domain. APIs define communication contracts independently; Components implement or consume them;
 Resources represent managed dependencies. Catalog relationships are intentionally unversioned,
-while generated `api-dependencies.yaml` records a Component's reviewable contract versions.
+while each Component's generated Maven or Node build configuration records its reviewable contract
+versions.
 
 Every entity-producing repository stores its primary descriptor at `/catalog-info.yaml`. Golden
 paths immediately register that file, while the App-scoped GitHub provider independently discovers
@@ -205,7 +206,7 @@ flowchart TD
 An Argo CD Sync hook publishes the initial revision. Webhooks invoke the same Tekton Pipeline for
 later pushes and release tags. `info.version` is contract metadata; Git tags declare releases.
 
-Generated Components retrieve contracts with the official Apicurio Maven plugin:
+Generated Components retrieve selected contracts from Apicurio:
 
 | Selection | Scaffolding source | Build behavior | Reproducibility |
 | --- | --- | --- | --- |
@@ -213,10 +214,23 @@ Generated Components retrieve contracts with the official Apicurio Maven plugin:
 | Human release, such as `v2.1.0` | Exact Apicurio version | Downloads that immutable Registry version | Repeatable |
 | Exact 40-character Git SHA | Exact Apicurio version | Downloads that immutable Registry version | Repeatable |
 
-Each selected API gets its own namespace-qualified local contract filename and
-`openapi.client.<alias>.host` property. Camel profiles generate dormant, API-qualified `direct:`
-routes when operation IDs are available; contracts without operation IDs still receive download,
-host, catalog, and developer-documentation wiring.
+Java profiles use the official Apicurio Maven plugin. Each selected API gets its own
+namespace-qualified local contract filename and `openapi.client.<alias>.host` property. Camel
+profiles generate dormant, API-qualified `direct:` routes when operation IDs are available;
+contracts without operation IDs still receive download, host, catalog, and developer-documentation
+wiring.
+
+The Node.js profile downloads selected contracts into `contracts/` and uses `openapicmd` to
+generate TypeScript server and client types under `src/generated/`. Its Express service uses
+`openapi-backend` for provider-side routing and validation and `openapi-client-axios` for typed
+consumer clients. A consumed API's generated default URL can be overridden with
+`OPENAPI_CLIENT_<ALIAS>_URL`, where the alias is uppercased and non-alphanumeric characters become
+underscores.
+
+Contract consumption works across Systems in v1. Runtime endpoint resolution remains
+environment-owned configuration: operators can supply the override above instead of the generated
+default. The platform does not automatically discover a runtime endpoint from catalog or contract
+metadata.
 
 Camel implementation skeletons use `missingOperation("mock")` (or the YAML DSL equivalent), so
 unimplemented OpenAPI operations return Camel's contract-shaped mock behavior while development is
@@ -233,7 +247,7 @@ Component form presents the profiles in this order:
 | 2 | Quarkus Camel OpenAPI — YAML DSL | Quarkus when declarative routes are preferred |
 | 3 | Spring Boot Camel OpenAPI — Java DSL | Spring Boot applications that require Camel |
 | 4 | Spring Boot OpenAPI | Spring Boot applications without Camel route scaffolding |
-| 5 | Node.js OpenAPI | Minimal Node 24 service using built-in HTTP, fetch, and test APIs |
+| 5 | Node.js OpenAPI | Node 24, Express, OpenAPI request validation, and generated TypeScript clients/types |
 
 The template resolves developer choices into one platform build profile: Quarkus selects
 `quarkus-jvm` or `quarkus-native`, both Spring implementations select `spring-boot`, and Node

@@ -120,8 +120,22 @@ describe('Component implementation profiles', () => {
               'utf8',
             ),
           );
+          const packageLock = JSON.parse(
+            await fs.readFile(
+              path.join(destination, 'package-lock.json'),
+              'utf8',
+            ),
+          );
 
           expect(packageJson.engines.node).toBe('>=24 <25');
+          expect(generated).toContain('npm ci');
+          expect(packageLock).toMatchObject({
+            name: packageJson.name,
+            lockfileVersion: 3,
+          });
+          expect(packageLock.packages[''].dependencies).toEqual(
+            packageJson.dependencies,
+          );
 
           expect(packageJson.scripts).toMatchObject({
             'generate:openapi': 'node scripts/generate-openapi.mjs',
@@ -136,6 +150,9 @@ describe('Component implementation profiles', () => {
           expect(generated).toContain('/health/live');
           expect(generated).toContain(
             'registry.access.redhat.com/ubi9/nodejs-24:latest',
+          );
+          expect(generated).toContain(
+            'commandLine: npm ci && npm run build && npm start',
           );
 
           const openapiConfig = JSON.parse(
