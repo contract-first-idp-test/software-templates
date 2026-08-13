@@ -85,7 +85,7 @@ if (config.provided) {
 const clientExports = [
   "import {readFileSync} from 'node:fs';",
   "import {load as loadYaml} from 'js-yaml';",
-  "import OpenAPIClientAxios, {type Document} from 'openapi-client-axios';",
+  "import {OpenAPIClientAxios, type Document} from 'openapi-client-axios';",
   '',
 ];
 
