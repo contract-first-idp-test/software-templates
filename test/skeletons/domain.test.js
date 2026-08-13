@@ -64,8 +64,10 @@ test('platform admission skeleton renders trusted sources and constrained permis
         developerChartsRepositoryUrl:
           'https://github.com/contract-first-idp/developer-charts.git',
         developerChartsRevision: 'v1.0.0',
-        argocdNamespace: 'openshift-gitops',
-        destinationServer: 'https://kubernetes.default.svc',
+        argocdNamespace: 'gitops-control-plane',
+        keycloakNamespace: 'shared-identity-services',
+        secretsNamespace: 'shared-secret-services',
+        destinationServer: 'https://target.example.test',
       },
     });
     const project = YAML.parse(await fs.readFile(path.join(destination, 'project.yaml'), 'utf8'));
@@ -75,6 +77,11 @@ test('platform admission skeleton renders trusted sources and constrained permis
       'https://github.com/retail-team/retail-domain.git',
       'https://github.com/contract-first-idp/platform-components.git',
     ]));
+    expect(project.spec.destinations).toEqual([
+      {server: 'https://target.example.test', namespace: 'gitops-control-plane'},
+      {server: 'https://target.example.test', namespace: 'shared-identity-services'},
+      {server: 'https://target.example.test', namespace: 'shared-secret-services'},
+    ]);
     expect(project.spec.clusterResourceWhitelist).not.toContainEqual(
       expect.objectContaining({group: '*'}),
     );

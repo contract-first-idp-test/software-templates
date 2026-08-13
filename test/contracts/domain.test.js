@@ -37,6 +37,13 @@ describe('portable Domain and admission contracts', () => {
     expect(template.spec.steps.some(step => step.action?.startsWith('roadiehq:'))).toBe(false);
     expect(template.spec.steps.find(step => step.id === 'renderAdmission').input.targetPath)
       .toContain('spec.platform.tenantAdmission.path');
+    expect(template.spec.steps.find(step => step.id === 'renderAdmission').input.values)
+      .toMatchObject({
+        keycloakNamespace:
+          '${{ steps.fetchTarget.output.entity.spec.platform.security.keycloak.namespace }}',
+        secretsNamespace:
+          '${{ steps.fetchTarget.output.entity.spec.platform.security.secrets.namespace }}',
+      });
     expect(template.spec.steps.find(step => step.id === 'platformPr').action)
       .toBe('publish:github:pull-request');
     expect(template.spec.steps.find(step => step.id === 'platformPr').input.targetBranchName)

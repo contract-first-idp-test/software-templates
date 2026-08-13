@@ -110,6 +110,8 @@ spec:
           developerChartsRepositoryUrl: ${{ steps.fetchTarget.output.entity.spec.platform.dependencies.developerCharts.repositoryUrl }}
           developerChartsRevision: ${{ steps.fetchTarget.output.entity.spec.platform.dependencies.developerCharts.revision }}
           argocdNamespace: ${{ steps.fetchTarget.output.entity.spec.platform.argocd.namespace }}
+          keycloakNamespace: ${{ steps.fetchTarget.output.entity.spec.platform.security.keycloak.namespace }}
+          secretsNamespace: ${{ steps.fetchTarget.output.entity.spec.platform.security.secrets.namespace }}
           destinationServer: ${{ steps.fetchTarget.output.entity.spec.platform.argocd.destinationServer }}
     - id: publish
       name: Publish tenant Domain repository
