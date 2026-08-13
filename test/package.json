@@ -6,6 +6,7 @@
     "release:validate": "node validate-release.js",
     "release:compatibility": "node validate-sibling-releases.js",
     "test": "jest --runInBand --config jest.config.js",
+    "test:release": "jest --runInBand --config jest.release.config.js",
     "test:contracts": "jest --runInBand --config jest.config.js contracts",
     "test:skeletons": "jest --runInBand --config jest.config.js skeletons",
     "test:compatibility": "jest --config jest.compatibility.config.js --runInBand && npm run test:chart-compat",

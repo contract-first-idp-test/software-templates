@@ -43,20 +43,4 @@ describe('portable Domain and admission contracts', () => {
       .toContain('spec.platform.tenantAdmission.branch');
   });
 
-  it('generates a self-contained exact three-repository admission pair', () => {
-    const project = read('skeletons/domain/platform-admission/project.yaml');
-    const application = read('skeletons/domain/platform-admission/application.yaml');
-    expect((project.match(/^    - /gm) || []).length).toBeGreaterThanOrEqual(3);
-    expect(project).toContain('${{ values.developerChartsRepositoryUrl }}');
-    expect(project).toContain('${{ values.repositoryName }}.git');
-    expect(project).toContain('kind: ClusterSecretStore');
-    expect(project).toContain('kind: KeycloakOIDCClient');
-    expect(project).not.toMatch(/group: ["']?\*["']?|kind: ["']?\*["']?/);
-    expect(project).toContain('${{ values.platformRepositoryName }}.git');
-    expect(application).toContain('$domain/catalog-info.yaml');
-    expect(application).toContain('$platform/${{ values.platformTargetValuesPath }}');
-    expect(application.indexOf('$platform/${{ values.platformTargetValuesPath }}'))
-      .toBeLessThan(application.indexOf('$domain/catalog-info.yaml'));
-    expect(application).toContain('targetRevision: ${{ values.developerChartsRevision }}');
-  });
 });

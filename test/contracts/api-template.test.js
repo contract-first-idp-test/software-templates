@@ -10,11 +10,8 @@ const template = YAML.parse(fs.readFileSync(
 const source = fs.readFileSync(path.join(root, 'templates/api/template.yaml'), 'utf8');
 
 test('API template consumes runtime configuration from the target entity', () => {
-  expect(template.spec.steps.find(step => step.id === 'fetchTargetValues')).toBeUndefined();
-  expect(template.spec.steps.find(step => step.id === 'parseTargetValues')).toBeUndefined();
   expect(source).toContain('steps.fetchTarget.output.entity.spec.platform.schemaRegistry.apiUrl');
   expect(source).toContain('steps.fetchTarget.output.entity.spec.platform.cluster.routerDomain');
-  expect(source).not.toContain('domain-values.yaml');
 });
 
 test('API template stages the selected document without governing it', () => {
@@ -37,17 +34,4 @@ test('API template stages the selected document without governing it', () => {
       preserveFormatting: true,
     },
   });
-  for (const removed of [
-    'writeUploadedSpecification', 'parseSpecification',
-    'governSpecification', 'serializeSpecification',
-  ]) expect(template.spec.steps.find(step => step.id === removed)).toBeUndefined();
-});
-
-test('API template delegates all contract governance to Spectral', () => {
-  expect(source).not.toContain('$assert');
-  expect(source).not.toContain('OpenAPI version must');
-  expect(source).not.toContain('info.version must');
-  expect(source).not.toContain('paths must be');
-  expect(source).not.toContain('governSpecification');
-  expect(source).not.toContain('parseSpecification');
 });

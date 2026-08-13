@@ -18,6 +18,9 @@ It validates repository-local template contracts and renders representative skel
 inputs live under `test/fixtures/inputs/`; coordinated Bookinfo and cross-System data lives under
 `test/fixtures/scenarios/`. These files are test data, not production catalog entities.
 
+Release-policy tests are separate from normal discovery. Run `make release-check` to execute the
+fast suite followed by the focused release tests and release-candidate validator.
+
 Cross-repository compatibility is intentionally manual for now. Use this sibling layout:
 
 ```text

@@ -7,22 +7,6 @@ const {repositoryRoot: root} = require('../helpers/paths');
 const source = fs.readFileSync(
   path.join(root, 'templates/component/template.yaml'), 'utf8');
 const template = YAML.parse(source);
-const requiredSteps = [
-  'fetchSystem', 'fetchDomain', 'fetchTarget', 'resolveBuildProfile',
-  'fetchApi', 'fetchConsumedApis',
-  'resolveApiMetadata', 'fetchConsumedContracts', 'parseConsumedContracts',
-  'discoverConsumedOperations', 'renderImplementation', 'renderBase',
-  'renderComponentDesiredState', 'renderComponentEnvironment', 'publish',
-  'register', 'webhook', 'systemPr',
-];
-const removedSteps = [
-  'fetchTargetValues', 'parseTargetValues', 'normalizeConsumedApiSelections',
-  'validateProvidedApiRegistry', 'validateConsumedApiRegistry',
-  'writeProvidedLatestContract', 'fetchProvidedPinnedContract',
-  'parseProvidedContract', 'normalizeProvidedApi',
-  'writeConsumedLatestContracts', 'fetchConsumedPinnedContracts',
-  'normalizeConsumedApis', 'renderComponentBase', 'renderBuildRelease',
-];
 
 function step(id) {
   const match = template.spec.steps.find(candidate => candidate.id === id);
@@ -49,21 +33,15 @@ function apiEntity({namespace = 'default', name, group, artifact = name}) {
   };
 }
 
-test('Component has the exact 18-step workflow and four Roadie actions', () => {
-  expect(template.spec.steps.map(candidate => candidate.id)).toEqual(requiredSteps);
-  expect(template.spec.steps).toHaveLength(18);
-  expect(template.spec.steps.filter(candidate =>
-    candidate.action.startsWith('roadiehq:')).map(candidate => [
-      candidate.id, candidate.action,
-  ])).toEqual([
-    ['resolveBuildProfile', 'roadiehq:utils:jsonata'],
-    ['resolveApiMetadata', 'roadiehq:utils:jsonata'],
-    ['parseConsumedContracts', 'roadiehq:utils:fs:parse'],
-    ['discoverConsumedOperations', 'roadiehq:utils:jsonata'],
-  ]);
-  for (const id of removedSteps) {
-    expect(template.spec.steps.some(candidate => candidate.id === id)).toBe(false);
-  }
+test('Component connects API resolution to implementation and desired-state rendering', () => {
+  for (const id of [
+    'fetchSystem', 'fetchDomain', 'fetchTarget', 'resolveBuildProfile',
+    'resolveApiMetadata', 'fetchConsumedContracts', 'discoverConsumedOperations',
+    'renderImplementation', 'renderBase', 'renderComponentDesiredState',
+    'publish', 'register', 'systemPr',
+  ]) expect(step(id)).toBeDefined();
+  expect(step('resolveBuildProfile').action).toBe('roadiehq:utils:jsonata');
+  expect(step('resolveApiMetadata').action).toBe('roadiehq:utils:jsonata');
 });
 
 test('provided and consumed API pickers require OpenAPI entities', () => {

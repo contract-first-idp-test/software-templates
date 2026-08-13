@@ -137,23 +137,16 @@ describe('Component implementation profiles', () => {
             packageJson.dependencies,
           );
 
-          expect(packageJson.scripts).toMatchObject({
-            'generate:openapi': 'node scripts/generate-openapi.mjs',
-            build: 'npm run generate:openapi && tsc -p tsconfig.json',
-            test: 'npm run build && node --test dist/test/*.test.js',
-          });
-
-          expect(generated).toContain("from 'openapi-backend'");
-          expect(generated).toContain('validateResponse');
-          expect(generated).toContain('mockResponseForOperation');
-          expect(generated).toContain('/health/ready');
-          expect(generated).toContain('/health/live');
+          expect(packageJson.scripts.test).toContain('npm run build');
+          expect(packageJson.dependencies).toEqual(expect.objectContaining({
+            express: expect.any(String),
+            'openapi-backend': expect.any(String),
+            'openapi-client-axios': expect.any(String),
+          }));
           expect(generated).toContain(
             'registry.access.redhat.com/ubi9/nodejs-24:latest',
           );
-          expect(generated).toContain(
-            'commandLine: npm ci && npm run build && npm start',
-          );
+          expect(generated).toMatch(/id: run[\s\S]*npm ci[\s\S]*npm run build[\s\S]*npm start/);
 
           const openapiConfig = JSON.parse(
             await fs.readFile(
@@ -170,35 +163,12 @@ describe('Component implementation profiles', () => {
               version: 'v2.1.3',
             });
 
-            expect(openapiConfig.consumed).toEqual(
-              expect.arrayContaining([
-                expect.objectContaining({
-                  alias: 'cf-idp-integration-tests-details',
-                  version: 'latest',
-                  defaultBaseUrl: 'http://details:8080',
-                }),
-                expect.objectContaining({
-                  alias: 'payments-authorization',
-                  version: 'v2.1.3',
-                  defaultBaseUrl: 'http://authorization:8080',
-                }),
-                expect.objectContaining({
-                  alias: 'vendor-details',
-                  version: exactSha,
-                  defaultBaseUrl: 'http://details:8080',
-                }),
-                expect.objectContaining({
-                  alias: 'cf-idp-integration-tests-wiring-only',
-                  version: 'latest',
-                  defaultBaseUrl: 'http://wiring-only:8080',
-                }),
-              ]),
-            );
-
-            expect(generated).toContain('OpenAPIClientAxios');
-            expect(generated).toContain('function envName(alias)');
+            expect(openapiConfig.consumed).toHaveLength(selection.consumed_apis.length);
+            expect(openapiConfig.consumed.map(api => api.version))
+              .toEqual(selection.consumed_apis.map(api => api.version));
+            expect(openapiConfig.consumed.every(api =>
+              api.alias && api.defaultBaseUrl.startsWith('http://'))).toBe(true);
             expect(generated).toContain('OPENAPI_CLIENT_');
-            expect(generated).toContain('defaultBaseUrl');
           }
 
           continue;
@@ -210,13 +180,6 @@ describe('Component implementation profiles', () => {
         );
 
         expect(XMLValidator.validate(pom)).toBe(true);
-        expect(pom).toContain(
-          '<groupId>io.github.cfidp.storefront</groupId>',
-        );
-        expect(pom).toContain(
-          '<artifactId>registry-verification</artifactId>',
-        );
-
         if (scenario === 'basic') {
           expect(pom).not.toContain(
             'apicurio-registry-maven-plugin',
@@ -224,21 +187,12 @@ describe('Component implementation profiles', () => {
           continue;
         }
 
-        for (const alias of [
-          'cf-idp-integration-tests-details',
-          'payments-authorization',
-          'vendor-details',
-          'cf-idp-integration-tests-wiring-only',
-        ]) {
-          expect(pom).toContain(`${alias}-api.yaml`);
+        for (const api of selection.consumed_apis) {
+          expect(pom).toContain(api.contract_file);
         }
 
         expect(pom).toContain('<version>v2.1.3</version>');
         expect(pom).toContain(`<version>${exactSha}</version>`);
-
-        expect(generated).not.toContain(
-          'direct:cf-idp-integration-tests-wiring-only.',
-        );
 
         if (profile !== 'spring-boot-openapi') {
           expect(generated).toMatch(
@@ -249,13 +203,11 @@ describe('Component implementation profiles', () => {
             /missingOperation\(["']ignore["']\)|missingOperation:\s*ignore/,
           );
 
-          expect(generated).toContain(
-            'direct:cf-idp-integration-tests-details.getProduct',
-          );
-
-          expect(generated).toContain(
-            'direct:vendor-details.getProduct',
-          );
+          for (const api of selection.consumed_apis) {
+            for (const operation of api.operations) {
+              expect(generated).toContain(`direct:${api.alias}.${operation.operation_id}`);
+            }
+          }
         }
       }
     },

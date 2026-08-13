@@ -11,5 +11,7 @@ module.exports = {
     '<rootDir>/test/node_modules/', '<rootDir>/test/fixtures/',
     '<rootDir>/test/smoke/', '<rootDir>/test/live/',
     '<rootDir>/test/coordinated/',
+    '<rootDir>/test/contracts/release-versioning.test.js',
+    '<rootDir>/test/release-validator.test.js',
   ],
 };

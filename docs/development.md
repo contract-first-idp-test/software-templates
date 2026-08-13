@@ -60,13 +60,15 @@ The default command runs only repository-local Jest suites:
 | --- | --- | --- |
 | Repository contracts | `npm run --prefix test test:contracts` | Registered templates, metadata, actions, and file contracts |
 | Skeleton rendering | `npm run --prefix test test:skeletons` | Representative generated repositories and profile-specific output |
-| Coordinated compatibility | `npm run --prefix test test:compatibility` | Root target, generated values, consumers, schemas, and canonical chart paths |
 
 Bookinfo and cross-System scenarios under `test/fixtures/` are test data only; production catalog
 metadata must not register the fixture tree.
 
 `make test` does not require sibling repositories, a live Backstage instance, cluster, or Schema
 Registry. GitHub Actions currently runs this repository-local command only.
+
+Release-policy tests are intentionally excluded from the fast suite. `make release-check` runs the
+fast suite, the focused release-policy tests, and validation of the current release candidate.
 
 ## Template-to-chart compatibility
 

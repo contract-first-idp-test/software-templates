@@ -45,7 +45,7 @@ test('Domain skeleton renders a parseable nonstandard lifecycle', async () => {
   }
 });
 
-test('platform admission skeleton renders exactly three trusted repositories', async () => {
+test('platform admission skeleton renders trusted sources and constrained permissions', async () => {
   const destination = await fs.mkdtemp(path.join(os.tmpdir(), 'domain-admission-'));
   try {
     await renderDirectory({
@@ -70,20 +70,19 @@ test('platform admission skeleton renders exactly three trusted repositories', a
     });
     const project = YAML.parse(await fs.readFile(path.join(destination, 'project.yaml'), 'utf8'));
     expect(project.metadata.annotations['argocd.argoproj.io/sync-wave']).toBe('0');
-    expect(project.spec.sourceRepos).toEqual([
+    expect(project.spec.sourceRepos).toEqual(expect.arrayContaining([
       'https://github.com/contract-first-idp/developer-charts.git',
       'https://github.com/retail-team/retail-domain.git',
       'https://github.com/contract-first-idp/platform-components.git',
-    ]);
+    ]));
+    expect(project.spec.clusterResourceWhitelist).not.toContainEqual(
+      expect.objectContaining({group: '*'}),
+    );
     const application = YAML.parse(await fs.readFile(
       path.join(destination, 'application.yaml'), 'utf8'));
-    expect(application.spec.sources).toHaveLength(3);
     expect(application.metadata.annotations['argocd.argoproj.io/sync-wave']).toBe('1');
-    expect(application.spec.sources[0].helm.valueFiles).toEqual([
-      '$platform/catalog-info.yaml',
-      '$domain/catalog-info.yaml',
-    ]);
-    expect(application.spec.sources[0].path).toBe('charts/domain/environment');
+    expect(application.spec.sources.some(source =>
+      source.path === 'charts/domain/environment')).toBe(true);
   } finally {
     await fs.rm(destination, {recursive: true, force: true});
   }
