@@ -23,7 +23,6 @@ renders the Domain chart, and creates System discovery controllers for the order
 {% for environment in values.environments -%}
 | `${{ environment.name }}` | `${{ environment.namespaceSuffix | default("none", true) }}` |
 {% endfor %}
-
 The target reference keeps tenant lifecycle policy separate from target-specific runtime
 configuration and permits attachment to another compatible target.
 

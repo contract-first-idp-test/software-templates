@@ -81,7 +81,6 @@ FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24
 
 ENV LANGUAGE='en_US:en'
 
-
 COPY target/lib/* /deployments/lib/
 COPY target/*-runner.jar /deployments/quarkus-run.jar
 

@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
     <name>${{ values.component_id }}</name>
-  
+
     <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -24,7 +24,7 @@
       <apicurio.registry.maven.plugin.version>3.2.5.redhat-00004</apicurio.registry.maven.plugin.version>
       <schema.registry.api.url>${{ values.schema_registry_api_url }}</schema.registry.api.url>
     </properties>
-  
+
     <dependencyManagement>
       <dependencies>
         <!-- Camel BOM -->
@@ -37,9 +37,9 @@
         </dependency>
       </dependencies>
     </dependencyManagement>
-  
+
     <dependencies>
-  
+
       <!-- Spring Boot -->
       <dependency>
         <groupId>org.springframework.boot</groupId>
@@ -103,7 +103,7 @@
         <groupId>org.apache.camel.springboot</groupId>
         <artifactId>camel-openapi-java-starter</artifactId>
       </dependency>
-  
+
       <!--
       This dependency is mandatory for enabling Camel management
       via JMX / Hawtio.
@@ -124,7 +124,7 @@
         <artifactId>jackson-databind-nullable</artifactId>
         <version>0.2.6</version>
       </dependency>
-  
+
       <!-- Test -->
       <dependency>
         <groupId>org.springframework.boot</groupId>
@@ -137,7 +137,7 @@
         <scope>test</scope>
       </dependency>
     </dependencies>
-  
+
     <build>
       <resources>
         <resource>
@@ -149,7 +149,7 @@
       </resources>
 
       <plugins>
-        {% if values.provided_api or values.consumed_apis | length > 0 %}
+        {%- if values.provided_api or values.consumed_apis | length > 0 %}
         <plugin>
           <groupId>io.apicurio</groupId>
           <artifactId>apicurio-registry-maven-plugin</artifactId>
@@ -162,30 +162,34 @@
               <configuration>
                 <registryUrl>${schema.registry.api.url}</registryUrl>
                 <artifacts>
-                  {% if values.provided_api %}
+                  {%- if values.provided_api %}
                   <artifact>
                     <groupId>${{ values.provided_api.registry_group_id }}</groupId>
                     <artifactId>${{ values.provided_api.registry_artifact_id }}</artifactId>
-                    {% if values.provided_api.version != 'latest' %}<version>${{ values.provided_api.version }}</version>{% endif %}
+                    {%- if values.provided_api.version != 'latest' %}
+                    <version>${{ values.provided_api.version }}</version>
+                    {%- endif %}
                     <file>${project.build.directory}/generated-resources/openapi/${{ values.provided_api.contract_file }}</file>
                     <overwrite>true</overwrite>
                   </artifact>
-                  {% endif %}
-                  {% for consumed_api in values.consumed_apis %}
+                  {%- endif %}
+                  {%- for consumed_api in values.consumed_apis %}
                   <artifact>
                     <groupId>${{ consumed_api.registry_group_id }}</groupId>
                     <artifactId>${{ consumed_api.registry_artifact_id }}</artifactId>
-                    {% if consumed_api.version != 'latest' %}<version>${{ consumed_api.version }}</version>{% endif %}
+                    {%- if consumed_api.version != 'latest' %}
+                    <version>${{ consumed_api.version }}</version>
+                    {%- endif %}
                     <file>${project.build.directory}/generated-resources/openapi/${{ consumed_api.contract_file }}</file>
                     <overwrite>true</overwrite>
                   </artifact>
-                  {% endfor %}
+                  {%- endfor %}
                 </artifacts>
               </configuration>
             </execution>
           </executions>
         </plugin>
-        {% endif %}
+        {%- endif %}
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>

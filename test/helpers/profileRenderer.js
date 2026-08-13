@@ -15,6 +15,15 @@ function isText(buffer) {
   return !buffer.subarray(0, 8192).includes(0);
 }
 
+function validateRenderedWhitespace(relative, rendered) {
+  if (/[ \t]+$/m.test(rendered)) {
+    throw new Error(`${relative} renders trailing or whitespace-only line content`);
+  }
+  if (/\n{3,}/.test(rendered)) {
+    throw new Error(`${relative} renders more than one consecutive blank line`);
+  }
+}
+
 async function filesBelow(directory) {
   const entries = await fs.readdir(directory, {withFileTypes: true});
   const files = [];
@@ -38,13 +47,11 @@ async function renderDirectory({source, destination, values}) {
       fs.stat(sourceFile),
     ]);
     await fs.mkdir(path.dirname(destinationFile), {recursive: true});
-    await fs.writeFile(
-      destinationFile,
-      isText(content)
-        ? environment.renderString(content.toString('utf8'), {values})
-        : content,
-      {mode: metadata.mode},
-    );
+    const rendered = isText(content)
+      ? environment.renderString(content.toString('utf8'), {values})
+      : content;
+    if (typeof rendered === 'string') validateRenderedWhitespace(relative, rendered);
+    await fs.writeFile(destinationFile, rendered, {mode: metadata.mode});
   }
 
   return destination;

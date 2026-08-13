@@ -220,7 +220,7 @@
                     </execution>
                 </executions>
             </plugin>
-            {% if values.provided_api or values.consumed_apis | length > 0 %}
+            {%- if values.provided_api or values.consumed_apis | length > 0 %}
             <plugin>
                 <groupId>io.apicurio</groupId>
                 <artifactId>apicurio-registry-maven-plugin</artifactId>
@@ -233,30 +233,34 @@
                     <configuration>
                       <registryUrl>${schema.registry.api.url}</registryUrl>
                       <artifacts>
-                        {% if values.provided_api %}
+                        {%- if values.provided_api %}
                         <artifact>
                           <groupId>${{ values.provided_api.registry_group_id }}</groupId>
                           <artifactId>${{ values.provided_api.registry_artifact_id }}</artifactId>
-                          {% if values.provided_api.version != 'latest' %}<version>${{ values.provided_api.version }}</version>{% endif %}
+                          {%- if values.provided_api.version != 'latest' %}
+                          <version>${{ values.provided_api.version }}</version>
+                          {%- endif %}
                           <file>${project.build.directory}/generated-resources/openapi/${{ values.provided_api.contract_file }}</file>
                           <overwrite>true</overwrite>
                         </artifact>
-                        {% endif %}
-                        {% for consumed_api in values.consumed_apis %}
+                        {%- endif %}
+                        {%- for consumed_api in values.consumed_apis %}
                         <artifact>
                           <groupId>${{ consumed_api.registry_group_id }}</groupId>
                           <artifactId>${{ consumed_api.registry_artifact_id }}</artifactId>
-                          {% if consumed_api.version != 'latest' %}<version>${{ consumed_api.version }}</version>{% endif %}
+                          {%- if consumed_api.version != 'latest' %}
+                          <version>${{ consumed_api.version }}</version>
+                          {%- endif %}
                           <file>${project.build.directory}/generated-resources/openapi/${{ consumed_api.contract_file }}</file>
                           <overwrite>true</overwrite>
                         </artifact>
-                        {% endfor %}
+                        {%- endfor %}
                       </artifacts>
                    </configuration>
                  </execution>
                 </executions>
             </plugin>
-            {% endif %}
+            {%- endif %}
         </plugins>
     </build>
     <profiles>
